@@ -93,18 +93,31 @@ somewhere in `config/keyball44.keymap` if you want it.
 
 ## Day-1 install
 
-### 0. Build the firmware
+### 0. Build the firmware (locally)
 
-Push this branch to a GitHub repo you own (a fork of this repo works) and GitHub
-Actions builds it automatically — check the **Actions** tab, open the latest run, and
-download the `firmware` artifact. It contains:
+One-time setup (installs cmake/ninja/dtc/uv via Homebrew, pulls ~2GB of
+ZMK/Zephyr sources into this repo — gitignored — and the Zephyr ARM toolchain
+into `~/zephyr-sdk-0.16.8`):
 
-- `keyball44_left ... .uf2` — left half (the central/USB half)
-- `keyball44_right ... .uf2` — right half
-- `settings_reset ... .uf2` — pairing reset
+```sh
+./build.sh setup
+```
 
-> On a fresh fork, GitHub disables workflows until you click **"I understand my
-> workflows, enable them"** in the Actions tab once.
+Then every build is just:
+
+```sh
+./build.sh
+```
+
+Output lands in `./firmware/`:
+
+- `keyball44_left.uf2` — left half (the central/USB half)
+- `keyball44_right.uf2` — right half
+- `settings_reset.uf2` — pairing reset
+
+Incremental rebuilds after keymap edits take seconds. `./build.sh clean` wipes
+the build output if things get weird. (Pushing to a GitHub fork also still works —
+the stock ZMK Actions workflow in `.github/workflows/` builds the same targets.)
 
 ### 1. (First time / pairing problems) flash `settings_reset`
 

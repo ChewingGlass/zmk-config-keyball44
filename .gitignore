@@ -1,0 +1,11 @@
+# Local west build workspace (created by build.sh / west init)
+.venv/
+.west/
+zmk/
+zephyr/
+modules/
+tools/
+bootloader/
+zmk-pmw3610-driver/
+build/
+firmware/
