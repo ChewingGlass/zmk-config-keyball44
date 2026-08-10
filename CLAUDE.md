@@ -54,9 +54,14 @@ that isn't obvious from the code.
 - Pointer speed has two independent dials and they answer different complaints.
   `&zip_xy_scaler <mul> <div>` on `trackball_listener` sets the slow-movement
   floor (it tracks remainders, so unlike `CPI_DIVIDOR` it loses nothing);
-  `CONFIG_PMW3610_ACCELERATION_*` adds reach on fast flicks. Acceleration is
-  quadratic (`x + x*x/(22 - 2*sensitivity)`) so it gets jumpy fast — sensitivity
-  landed at 1, and 5 was already too much. Sensitivity >10 divides by zero.
+  `CONFIG_PMW3610_ACCELERATION_*` adds reach on fast flicks. Which acceleration
+  algorithm is selected changes what sensitivity means, so never carry a value
+  between them: `ALGORITHM=1` is quadratic on per-report size, unbounded, jumpy
+  above ~2 and a divide-by-zero at 11; `ALGORITHM=2` (in use) is a sigmoid on
+  measured speed whose gain is capped at sensitivity itself, which makes the
+  number a maximum multiplier and safe to raise. 2 is also the only one worth
+  stacking on top of the macOS curve, which is the arrangement here — a low macOS
+  tracking slider for precision, firmware acceleration for reach.
 - Check thumb placement FIRST. The sensor is side-mounted, so it images the ball
   from one side: a thumb resting on top of the ball presses it away from that
   lens, past the focal range, and tracking stops until the pressure eases.
@@ -83,11 +88,36 @@ that isn't obvious from the code.
   BLE latency change look like it helped. Healthy reference, measured with a
   freely spinning ball at the stock slave latency of 16: ~115 updates/sec,
   median gap 8.2ms, p90 8.9ms, p99 15.5ms, 99% inside 16ms.
+- `kscan0` in `keyball44.dtsi` must keep `wakeup-source;`. Both halves deep-sleep
+  after 15 minutes (`CONFIG_ZMK_SLEEP` in `config/keyball44.conf`, which applies to
+  both builds — the shield's per-half confs are for hardware that differs). The
+  vendor shield shipped without the property, which made the sleeping half
+  unrecoverable: deep sleep is nRF52 System OFF, exited only by a
+  GPIO DETECT event or a reset, and `zmk_pm_suspend_devices` (`zmk/app/src/pm.c`)
+  arms the matrix only when the node is wakeup-capable — otherwise it suspends it,
+  and `kscan_matrix_pm_action` disconnects every row and column pin on the way
+  down. Symptom: display dark, no input, no BLE, and only the power switch brings
+  it back. Compare against stock ZMK shields, which all carry the property.
 - The mod key is the `nav_mod` macro, not a plain `&mo`: on release it taps
   `&tog_off SELECT` so sticky selection always dies with the mod key. Don't
   "simplify" it to `&mo NAV`.
 - SELECT must stay a higher layer index than NAV (it overlays it), and mostly
   `&trans` so unlisted keys fall through to NAV's Cmd bindings.
+- Left thumb cluster, outer to inner: scroll/Alt, TAB/NUM, ENTER/Shift, MOD, SYM.
+  Shift is a thumb hold rather than the outer pinky key because palming that key
+  is awkward on a board this narrow; Command took the pinky key in exchange, and
+  NUM moved outward one key to free the Enter thumb for Shift. The keycap legends
+  (*alt*, *command*) date from the previous arrangement and no longer match.
+  Consequences worth knowing before rearranging again: the global `&mt` block is
+  now used by nothing but the Shift key, so its flavor is tuned for Shift
+  (`balanced` — see the comment on it) rather than for a tap-first key; and SYS
+  (SYM+NUM) spans the cluster's two ends instead of two neighbours.
+- Enter being the Shift key's tap means shift+enter needs a second key. It is on
+  both of the neighbouring press orders: the NUM key is `&num_tab`, whose tap
+  morphs TAB -> shift+enter while shift is held, and NUM's own layer puts
+  `&kp LS(ENTER)` on the Enter/Shift thumb. Note `num_tab`'s tap side is a
+  zero-parameter mod-morph, so the keymap passes a dummy `0` as its second
+  parameter (`&num_tab NUM 0`) — hold-tap always takes two.
 - Ctrl lives only on the corner key's hold (`rclk_ctrl`, tap = right click). The
   corne had it twice — a seventh column this board lacks, and the hold of its
   `LCTL_T(ENTER)` right thumb — and Enter moved to the left thumb here, so both
@@ -158,7 +188,8 @@ drive disappearing as the success signal.
 - The physical reset button is on the PCB **directly underneath the display**;
   the nice!view cover has to come off to reach it. Only needed when a half is
   running firmware without `&bootloader`. This keymap has it on SYS (hold
-  NUM+SYM, press the outer Shift — locality-aware, each half reboots itself),
+  NUM+SYM, press the outer key of the bottom letter row — locality-aware, each
+  half reboots itself),
   so day-to-day flashing needs no disassembly.
 - `cp -X` matters. macOS writes extended attributes after the file data, and the
   board reboots the moment the last UF2 block lands, so a plain `cp` always
@@ -173,26 +204,29 @@ drive disappearing as the success signal.
 
 ## Git / remote situation
 
-`origin` is `mochukeeb/zmk-config-keyball44` and Noah has READ-ONLY access —
-you cannot push. If a remote is ever wanted, Noah must fork first (a previous
-attempt to `gh repo fork` was permission-blocked). Upstream has no main branch;
-`niceview` (our base) and `oled` are display-specific — don't mix firmware.
+`origin` is `ChewingGlass/zmk-config-keyball44`, Noah's fork, and is writable.
+The upstream it was forked from is the `mochukeeb` remote, which is read-only —
+never push there. Work happens on the `keyball44-noah` branch and is published to
+`master` on the fork, so a push is `git push origin keyball44-noah:master`.
+Upstream has no main branch; `niceview` (our base) and `oled` are
+display-specific — don't mix firmware.
 
 ## Day-1 checklist
 
 Worked through on hardware 2026-08-10; kept as the regression list. Re-verify
 these after any keymap or trackball change:
 
-1. Halves pair; typing works on the base layer; Enter = tap of the NUM thumb
-   key (if Enter feels laggy or misfires while rolling keys, tune the global
-   `&lt` block: tapping-term 240ms / balanced / quick-tap 150).
+1. Halves pair; typing works on the base layer; Enter = tap of the Shift thumb
+   key, capitals = hold it (if Enter misfires while rolling keys, or capitals
+   need waiting out, tune the global `&mt` block: tapping-term 240ms /
+   balanced / quick-tap 150).
 2. Trackball points; left click = bottom-right key of the letter block, right
    click = corner key past the ball. Both are plain `&mkp` on the base layer,
    not an auto-mouse layer. Pointer speed via `CONFIG_PMW3610_CPI` plus the
    `zip_xy_scaler` on the listener; scroll direction via the INVERT_SCROLL opts.
 3. Bottom-left thumb: tap toggles scroll lock, hold is Option/Alt (`scroll_alt`
-   hold-tap). Next thumb key: tap TAB, hold Command. Ball scrolls while mod
-   held.
+   hold-tap). Next thumb key: tap TAB, hold NUM, and tap-with-shift-held for
+   shift+enter (hold NUM + tap Enter does the same). Ball scrolls while mod held.
 4. Mod key: mod+C copies, mod+J/K/L/I arrows, mod+U/O word-jump, mod+H
    end-of-line (shift+ for start), shift+mod+I/K page up/down, mod+D acts as
    shift.
@@ -202,9 +236,10 @@ these after any keymap or trackball change:
 6. SYS layer (hold NUM+SYM): A–G select BT profiles 0–4, Q/W/E pick output,
    X/C clear this profile / all profiles; bootloader and reset keys are
    locality-aware (left-side key acts on the left half, right-side key on the
-   right). BT profile select briefly lived on NUM's left half and
-   caused a "dead keyboard": the NUM thumb key is adjacent to MOD, so a thumb
-   catching both ranks NUM (4) over NAV (1) and `mod+D` fired `&bt BT_SEL 2` —
+   right). NUM and SYM are now the second and fifth thumb keys, so SYS takes
+   thumb-plus-index rather than one thumb. BT profile select briefly lived on
+   NUM's left half and caused a "dead keyboard": NUM (4) outranks NAV (1), so a
+   press catching both keys made `mod+D` fire `&bt BT_SEL 2` —
    an unpaired profile. Symptoms were displays fine, base layer, BLE showing
    connected, zero input; and `&bt` selection persists across a power cycle, so
    only `BT_SEL 0` recovers it. Keep destructive bindings off single-thumb-key

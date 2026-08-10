@@ -78,6 +78,17 @@
         compatible = "zmk,kscan-gpio-matrix";
         label = "KSCAN";
 
+        /* Required for a half with CONFIG_ZMK_SLEEP to ever come back. Deep
+           sleep is nRF52 System OFF, which exits only on a GPIO DETECT event or
+           a reset, and the DETECT source must be armed before powering off.
+           ZMK arms the matrix only if its node is wakeup-capable
+           (physical_layouts.c checks pm_device_wakeup_is_capable); without this
+           property the matrix is suspended instead — every row and column pin
+           set to GPIO_DISCONNECTED, interrupts off — so the keyboard powers off
+           with no wake source and needs its power switch cycled. Stock ZMK
+           shields all carry this; the vendor shield omitted it. */
+        wakeup-source;
+
         diode-direction = "col2row";
 		row-gpios
 			= <&pro_micro 21 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>

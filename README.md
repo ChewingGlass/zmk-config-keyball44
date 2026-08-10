@@ -15,13 +15,20 @@ All shortcuts are macOS-flavored (Cmd-based).
 ## Base layer
 
 ```
-ESC    Q  W  E  R  T   │   Y  U  I  O  P   BSPC
-TAB    A  S  D  F  G   │   H  J  K  L  ;   '
-LSHFT  Z  X  C  V  B   │   N  M  ,  .  /   L-CLICK
-                       │
+ESC   Q  W  E  R  T   │   Y  U  I  O  P   BSPC
+TAB   A  S  D  F  G   │   H  J  K  L  ;   '
+CMD   Z  X  C  V  B   │   N  M  ,  .  /   L-CLICK
+                      │
 SCROLL TAB ENTER MOD SYM │ BSPC SPACE   ◉ball  R-CLICK
- ⇧alt  ⇧cmd ⇧num  ⇧nav ⇧ │              (⇧ctrl)
+ ⇧alt  ⇧num ⇧shft ⇧nav ⇧ │              (⇧ctrl)
 ```
+
+**Shift is a thumb hold, not a pinky key.** Palming the outer bottom-left key is
+awkward on a board this small, so Shift sits on the hold of the `ENTER` thumb key
+and `Command` takes the pinky key Shift used to have. `NUM` moved up one thumb
+key in the swap, onto the key whose keycap says *command* — the three thumb-cluster
+legends (*alt*, *command*, and the blank Enter key) no longer describe what the
+keys do.
 
 There is no right Shift and no Delete — those two keys became the mouse buttons —
 and no Caps Lock, whose key is now `TAB`. `TAB` is also still the tap of the
@@ -32,10 +39,21 @@ Left thumb row, left to right:
 | Key | Tap | Hold |
 | --- | --- | --- |
 | bottom-left (keycap says *alt*) | toggle trackball **scroll mode** (tap again to exit) | `Option`/`Alt` |
-| next (keycap says *command*) | `TAB` | `Command` |
-| Enter key | `ENTER` | **NUM** layer (numpad) |
+| next (keycap says *command*) | `TAB`, or **shift+enter** while Shift is held | **NUM** layer (numpad) |
+| Enter key | `ENTER` | **Shift** |
 | **MOD** | — | **NAV** layer (your old `LM(1, GUI)` key) |
 | inner | — | **SYM** layer |
+
+The Shift key is `&mt LSHFT ENTER` on the `balanced` flavor, so a capital letter
+resolves the moment the letter is released rather than after the 240ms tapping
+term — `tap-preferred`, which the other hold-taps use, would make every shifted
+character wait out the timer.
+
+**shift+enter** can't come from that key alone, since Enter is its tap. It is the
+two Enter-side thumb keys together, in either order: hold Shift and tap the NUM key
+(whose tap morphs from `TAB` to shift+enter while Shift is down), or hold NUM and
+tap the Enter key. The cost is shift+`TAB` from that thumb, which is still on the
+`TAB` key in the letter block.
 
 Right side: `BSPC` + `SPACE` thumbs, `ENTER` is on the left thumb now (tap the NUM
 key). The corner key past the trackball is **tap = right click, hold = Ctrl** —
@@ -47,7 +65,7 @@ hold of its Enter thumb, so this is its only home.
 Hold MOD and every key becomes `Cmd+<key>` (`mod+C` = copy, `mod+W` = close tab,
 `mod+TAB` = app switcher...), except the nav cluster:
 
-| Key | Plain | With shift held (tap `D` or a shift key) |
+| Key | Plain | With shift held (`D`, or hold the `ENTER` thumb key) |
 | --- | --- | --- |
 | `I` / `K` | ↑ / ↓ | Page Up / Page Down |
 | `J` / `L` | ← / → | Ctrl+←/→ (switch desktops) |
@@ -83,7 +101,7 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | Scroll (momentary) | hold MOD |
 | Pointer speed | `CONFIG_PMW3610_CPI` (1600) **plus** macOS → Mouse → Tracking speed; the slider is the fine adjustment |
 | Fine speed trim | `&zip_xy_scaler 1 1` in `keyball44_right.overlay` — leave at 1/1; ratios below 1 make small movements jolty |
-| Acceleration | on, `CONFIG_PMW3610_ACCELERATION_SENSITIVITY` (5, max **10**) — the reach for long movements |
+| Acceleration | sigmoid, `ACCELERATION_ALGORITHM=2` + `ACCELERATION_SENSITIVITY` (3) — sensitivity is the **maximum** multiplier, reached on hard flicks |
 | Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (120; higher = slower) — ball travel per click is `TICK * 25.4 / CPI` mm, currently 1.9mm |
 
 **Before tuning anything, check how you are holding it.** The sensor is
@@ -100,16 +118,18 @@ reseated ball: it should coast for a second or more and feel glassy. Clean with
 isopropyl alcohol only; household or disinfecting wipes leave a film that causes
 exactly this.
 
-The defaults here are deliberately conventional: firmware acceleration off, macOS
-acceleration left on, so the pointer behaves like any other mouse on the machine.
-If that is not enough, tune in this order:
+Two curves are running: macOS's, and the firmware's sigmoid on top of it. That is
+deliberate — it is what lets the macOS tracking slider sit low, for precision when
+nudging, without long movements running out of ball. Tune in this order:
 
-1. **Base speed** — `CONFIG_PMW3610_CPI` plus the macOS tracking slider, set by how
-   precise **short** movements feel.
-2. If long movements then can't reach, **disable macOS acceleration** (System
-   Settings → Mouse → Advanced) and enable the firmware curve instead. Do not run
-   both: stacked curves cannot be reasoned about, and that is what made
-   `ACCELERATION_SENSITIVITY=5` feel wild.
+1. **Base speed** — the macOS tracking slider, set by how precise **short**
+   movements feel. Lower it until slow tracking is accurate; ignore reach.
+2. **Reach** — `CONFIG_PMW3610_ACCELERATION_SENSITIVITY`, raised until a flick
+   crosses the screen. It is the ceiling of the multiplier, so 3 means a hard
+   flick moves at most 3× as far as the same ball travel would at a crawl.
+3. **Resolution** — `CONFIG_PMW3610_CPI`, only if slow movement is stepping rather
+   than merely fast. Higher CPI is finer, not just quicker (see below), and
+   `SCROLL_TICK` has to move with it.
 
 Notes, because several of these are traps:
 
@@ -136,18 +156,24 @@ Notes, because several of these are traps:
 
   CPI does not change the report *rate* — one report per poll either way — so raising
   it adds no BLE traffic and cannot bring back the 250Hz pointer lag.
-- **Two separate dials, don't confuse them.** The scaler sets how fast slow movement
-  is; acceleration (`output = x + x²/divider`, `divider = 22 - 2*sensitivity`) sets
-  how much extra fast movement gets. Reports of 1 count or less skip acceleration
-  entirely, so raising sensitivity never coarsens precise movement. "Can't cross the
-  screen" → raise sensitivity. "Too twitchy when nudging" → lower the scaler.
-- **Acceleration gets jumpy quickly.** The quadratic term means the boost grows with
-  the square of speed, so the gap between a normal move and a fast one widens fast.
-  Sensitivity above ~2 is noticeably aggressive on a ball this small. If the pointer
-  feels unpredictable rather than merely fast, that is acceleration, not speed —
-  turn it off with `ACCELERATION_ALGORITHM=0` and raise the scaler instead.
-- **Never set `ACCELERATION_SENSITIVITY` above 10.** Kconfig accepts up to 100, but
-  the driver computes `divider = 22 - 2*sensitivity`, so 11 divides by zero.
+- **Two separate dials, don't confuse them.** Base speed (the macOS slider, plus CPI)
+  sets how fast slow movement is; acceleration sets how much *extra* fast movement
+  gets. Reports of 1 count or less skip acceleration entirely, so raising sensitivity
+  never coarsens precise movement. "Can't cross the screen" → raise sensitivity.
+  "Too twitchy when nudging" → lower the slider.
+- **The two acceleration algorithms behave completely differently.** `ALGORITHM=2`
+  (sigmoid, in use here) reads speed in counts per millisecond between reports and
+  gives `1 + (sensitivity-1)·S(0.25·(speed-10))` — bounded by sensitivity, so the
+  setting is the maximum multiplier and raising it degrades gracefully. `ALGORITHM=1`
+  (quadratic, `x + x²/(22-2·sensitivity)`) reads the *size* of a single report and is
+  unbounded; at 800 CPI a hard flick is ~100 counts in one report, so its multiplier
+  runs away. That is what made sensitivity 5 unusable, and it divides by zero at 11.
+  A sensitivity number carried across from one algorithm to the other means nothing.
+- **Where the sigmoid's knee sits.** Halfway gain lands at 10 counts/ms, which at
+  800 CPI is 12.5 in/s of ball surface — a real flick, not a fast normal movement.
+  Below ~2 in/s the multiplier is within a few percent of 1× and truncation to whole
+  pixels rounds most of it away. Moving the knee means editing `pmw3610.c`; the only
+  exposed knob is the ceiling.
 - **Pointer lags over Bluetooth?** Report rate, not speed. The polling options are
   misnamed: `250` and `125_SW` both run the sensor at 250Hz, and `125_SW` merely
   discards every other report and folds it into the next (hence its extra latency).
@@ -206,7 +232,8 @@ somewhere in `config/keyball44.keymap` if you want it.
 - **SYM** (hold inner-left thumb): `! @ # $ %` / `~ \` { } [` on the left,
   `^ & * + =` / `] ( ) ' "` on the right, `- _ |` on the bottom, `_`/`-` on the
   right thumbs. Same as the corne's symbol layer.
-- **NUM** (hold the Enter key): right-hand numpad (`789 / 456 / 123`, `0` on SPACE),
+- **NUM** (hold the second left thumb key, the one whose keycap says *command*):
+  right-hand numpad (`789 / 456 / 123`, `0` on SPACE),
   ⌥⇧S/D/F on the left home row, ⌘SPACE (Spotlight) on the BSPC thumb, and the
   terminal control keys macOS has no room for because ⌘ owns those chords:
 
@@ -215,17 +242,19 @@ somewhere in `config/keyball44.keymap` if you want it.
   | `C` | `Ctrl+C` | interrupt |
   | `R` | `Ctrl+R` | reverse history search |
 
-  Nothing destructive goes on NUM's left half. Its thumb key is adjacent to MOD, so
-  a thumb catching both puts NUM (layer 4) above NAV (layer 1) and fires left-half
-  NUM bindings during ordinary `mod+C` / `mod+V` / `mod+D` use.
-- **SYS** (hold NUM + SYM together — two thumb keys, so it can't be hit by accident):
+  Nothing destructive goes on NUM's left half. NUM (layer 4) outranks NAV (layer 1),
+  so any press that catches both keys fires left-half NUM bindings during ordinary
+  `mod+C` / `mod+V` / `mod+D` use. The two are no longer neighbours in the thumb
+  cluster, which makes that rarer without making it impossible.
+- **SYS** (hold NUM + SYM together — the second and fifth left thumb keys, which
+  now sit at opposite ends of the cluster: reach it with thumb and index finger):
 
   | Key | Action |
   | --- | --- |
   | `A` `S` `D` `F` `G` | select Bluetooth profile 0–4 |
   | `Q` `W` `E` | output USB / BLE / toggle |
   | `X` / `C` | clear this profile's pairing / clear **all** profiles |
-  | `Z` / outer Shift | `sys_reset` / `bootloader` — left keys act on the left half, right keys on the right |
+  | `Z` / outer bottom-left (`⌘`) | `sys_reset` / `bootloader` — left keys act on the left half, right keys on the right |
   | right half | F1–F12 |
 
   **If the keyboard ever goes silent but the displays still work**, you are almost
@@ -286,8 +315,8 @@ double-tap. `./flash.sh left|right|reset` flashes a single target.
 **Finding the reset button**: it sits on the PCB *directly underneath the display*,
 so the protective cover over the nice!view has to come off to reach it. This is a
 one-time chore — this keymap puts `&bootloader` on the SYS layer, so afterwards hold
-the two thumb keys (NUM + SYM) and press the outer Shift key (left Shift reboots the
-left half, right Shift the right).
+the two thumb keys (NUM + SYM) and press the outer key of the bottom letter row (the
+left one, `⌘`, reboots the left half; the right one, the left-click key, the right).
 
 ### 3. Pair
 
@@ -300,6 +329,14 @@ and press `A`–`G` to switch, `X` to clear the current profile's pairing.
 
 ### 4. If something's weird
 
+- A half dark and dead after sitting idle, only the power switch revives it →
+  deep sleep with no wake source. Both halves sleep after 15 minutes unplugged
+  (`CONFIG_ZMK_SLEEP` in `config/keyball44.conf`; USB power suppresses it), and ZMK
+  arms the key matrix as the wake source only if
+  `kscan0` in `keyball44.dtsi` declares `wakeup-source;`. Without it the matrix is
+  suspended and its pins disconnected before power-off, so no keypress can reach
+  the chip. On a firmware that has it, a keypress wakes the half by resetting it —
+  expect a couple of seconds and one swallowed keystroke.
 - Halves not talking to each other → step 1 (settings_reset both), then reflash.
 - Trackball not moving → it's on the right half; make sure the right half got the
   right firmware and is powered.

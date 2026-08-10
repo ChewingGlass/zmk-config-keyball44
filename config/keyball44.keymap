@@ -25,9 +25,14 @@
     quick-tap-ms = <150>;
 };
 
+// Shift lives on the hold of a thumb key (tap = Enter), so "tap-preferred" is
+// wrong here: it resolves the hold only when the tapping term expires, which
+// means a capital letter has to wait 240ms before it will shift. "balanced"
+// resolves the hold as soon as the other key is released, so Shift+letter is
+// immediate, while Enter-then-keep-typing rolls still come out as Enter.
 &mt {
-    tapping-term-ms = <200>;
-    flavor = "tap-preferred";
+    tapping-term-ms = <240>;
+    flavor = "balanced";
     quick-tap-ms = <150>;
 };
 
@@ -72,6 +77,28 @@
             tapping-term-ms = <200>;
             quick-tap-ms = <150>;
             bindings = <&kp>, <&mkp>;
+        };
+
+        // Enter is the tap of the Shift key, so shift+enter cannot be produced by
+        // that key alone. It comes off the NUM thumb key next to it instead: with
+        // shift held, that key's tap morphs from TAB to shift+enter. The morph
+        // masks the physical shift and the morphed binding carries its own, so
+        // exactly one shift reaches the host. Shift+TAB is given up here and stays
+        // available on the TAB key in the letter block.
+        num_tab: num_tab {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "balanced";
+            tapping-term-ms = <240>;
+            quick-tap-ms = <150>;
+            bindings = <&mo>, <&tab_shift_enter>;
+        };
+
+        tab_shift_enter: tab_shift_enter {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp TAB>, <&kp LS(ENTER)>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
         };
 
         // NAV cluster shift variants (mod-morph suppresses the held shift,
@@ -202,8 +229,8 @@
             bindings = <
 &kp ESC         &kp Q  &kp W         &kp E          &kp R     &kp T              &kp Y      &kp U  &kp I      &kp O    &kp P      &kp BSPC
 &kp TAB         &kp A  &kp S         &kp D          &kp F     &kp G              &kp H      &kp J  &kp K      &kp L    &kp SEMI   &kp SQT
-&kp LSHFT       &kp Z  &kp X         &kp C          &kp V     &kp B              &kp N      &kp M  &kp COMMA  &kp DOT  &kp SLASH  &mkp LCLK
-&scroll_alt LALT SCROLL  &mt LGUI TAB  &lt NUM ENTER  &nav_mod  &mo SYM  &kp BSPC  &kp SPACE                                &rclk_ctrl LCTRL RCLK
+&kp LGUI        &kp Z  &kp X         &kp C          &kp V     &kp B              &kp N      &kp M  &kp COMMA  &kp DOT  &kp SLASH  &mkp LCLK
+&scroll_alt LALT SCROLL  &num_tab NUM 0  &mt LSHFT ENTER  &nav_mod  &mo SYM  &kp BSPC  &kp SPACE                           &rclk_ctrl LCTRL RCLK
             >;
         };
 
@@ -237,20 +264,21 @@
             >;
         };
 
-        // Nothing destructive belongs on this half. The NUM thumb key sits next
-        // to MOD, so a thumb that catches both puts NUM (layer 4) over NAV
-        // (layer 1) and every left-half NUM binding fires during ordinary MOD
-        // use — mod+C, mod+V, mod+W and mod+D are all everyday combos. Bluetooth
+        // Nothing destructive belongs on this half. NUM outranks NAV (layer 4 vs
+        // 1), so any press that catches both keys fires left-half NUM bindings in
+        // place of everyday MOD combos — mod+C, mod+V, mod+W, mod+D. Bluetooth
         // profile select lived here briefly and cost a dead keyboard: it silently
         // drops all input and the selection persists across a power cycle. It is
-        // on SYS instead, which needs two thumb keys held at once.
+        // on SYS instead, which needs two thumb keys held at once. NUM and MOD are
+        // no longer adjacent thumb keys, which makes the collision rarer but not
+        // impossible, and the cost of one is unchanged.
         number_layer {
             label = "NUM";
             bindings = <
 &trans  &trans  &trans         &trans         &kp LC(R)      &trans                 &trans  &kp KP_N7  &kp KP_N8  &kp KP_N9  &trans  &trans
 &trans  &trans  &kp LS(LA(S))  &kp LS(LA(D))  &kp LS(LA(F))  &trans                 &trans  &kp KP_N4  &kp KP_N5  &kp KP_N6  &trans  &trans
 &trans  &trans  &trans         &kp LC(C)      &trans         &trans                 &trans  &kp KP_N1  &kp KP_N2  &kp KP_N3  &trans  &trans
-&trans  &trans  &trans         &trans         &trans                 &kp LG(SPACE)  &kp KP_N0                                        &trans
+&trans  &trans  &kp LS(ENTER)  &trans         &trans                 &kp LG(SPACE)  &kp KP_N0                                        &trans
             >;
         };
 
