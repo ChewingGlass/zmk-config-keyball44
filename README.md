@@ -111,11 +111,11 @@ Tuning notes, because two of these are traps:
 - **Pointer lags over Bluetooth?** Report rate, not speed. The polling options are
   misnamed: `250` and `125_SW` both run the sensor at 250Hz, and `125_SW` merely
   discards every other report and folds it into the next (hence its extra latency).
-  Only plain `CONFIG_PMW3610_POLLING_RATE_125` slows the sensor itself. Every report
-  crosses two BLE hops here (right half → left half → host), and at the negotiated
-  7.5–11.25ms connection interval the radio cannot drain 250 reports/sec — the
-  backlog shows up as lag that grows while you keep moving. 125 is the setting for
-  wireless use; 250 is fine with the left half on USB.
+  Only plain `CONFIG_PMW3610_POLLING_RATE_125` slows the sensor itself. The ball is on
+  the central, so its reports go straight to the host — but at the negotiated
+  7.5–11.25ms connection interval that link carries only ~90–130 events/sec and cannot
+  drain 250 reports/sec, so the backlog shows up as lag that grows while you keep
+  moving. 125 is the setting for wireless use; 250 is fine with the right half on USB.
 - Still laggy at 125? `CONFIG_BT_PERIPHERAL_PREF_LATENCY` is 16, meaning the radio
   may skip up to 16 connection events to save power. Lowering it trades battery for
   responsiveness.
@@ -180,8 +180,9 @@ Then every build is just:
 
 Output lands in `./firmware/`:
 
-- `keyball44_left.uf2` — left half (the central/USB half)
-- `keyball44_right.uf2` — right half
+- `keyball44_right.uf2` — **right half: the central**. Holds the keymap, talks to
+  the host, runs ZMK Studio, drives the trackball. Any keymap edit goes here.
+- `keyball44_left.uf2` — left half (peripheral; only reports key positions)
 - `settings_reset.uf2` — pairing reset
 
 Incremental rebuilds after keymap edits take seconds. `./build.sh clean` wipes
@@ -202,6 +203,9 @@ reboots itself:
 1. Left half ← `keyball44_left ... .uf2`
 2. Right half ← `keyball44_right ... .uf2`
 
+The right half is the central, so **keymap changes only need the right half flashed**.
+The left half only needs it when its own shield config changes.
+
 `./flash.sh all` does the copying instead: it walks the whole first-time sequence
 (settings_reset on both halves, power-cycle, then the real firmware on each),
 waiting for the drive to mount at each step so the only thing to do by hand is the
@@ -215,9 +219,9 @@ left half, right Shift the right).
 
 ### 3. Pair
 
-Turn both halves on. They pair to each other automatically (left is central). Then on
-the Mac: System Settings → Bluetooth → connect to **Keyball44**. The left half is the
-one that talks to the computer — plug USB into it if you prefer wired.
+Turn both halves on. They pair to each other automatically (**right is central**).
+Then on the Mac: System Settings → Bluetooth → connect to **Keyball44**. The right
+half is the one that talks to the computer — plug USB into it if you prefer wired.
 
 Five Bluetooth profiles are available (0–4): hold NUM+SYM together (the SYS layer)
 and press `A`–`G` to switch, `X` to clear the current profile's pairing.

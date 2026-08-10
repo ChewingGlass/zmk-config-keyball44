@@ -42,10 +42,11 @@ that isn't obvious from the code.
   dead" feel. Change pointer speed with `CONFIG_PMW3610_CPI` instead. If CPI
   moves, move `CONFIG_PMW3610_SCROLL_TICK` with it — scroll mode ignores the
   dividor and counts raw ticks, so the two are coupled.
-- Trackball report rate is a latency budget, not a smoothness dial. Every report
-  crosses two BLE hops (right half → left half → host) and the negotiated
-  connection interval is 7.5-11.25ms, so 250Hz backs up and the pointer falls
-  progressively behind while moving. `CONFIG_PMW3610_POLLING_RATE_125` fixed it.
+- Trackball report rate is a latency budget, not a smoothness dial. The ball sits
+  on the central, so reports reach the host in one hop, but the negotiated
+  connection interval is 7.5-11.25ms — roughly 90-130 events/sec — so 250Hz backs
+  up and the pointer falls progressively behind while moving.
+  `CONFIG_PMW3610_POLLING_RATE_125` fixed it.
   The three options are misnamed: `250` and `125_SW` both write register `0x0D`
   (250Hz) and `125_SW` merely discards every other report in software, which is
   where its reputation for lag comes from; only plain `125` (register `0x00`)
@@ -94,9 +95,15 @@ needed. Notes baked into the script, learned the hard way:
 Artifacts land in `./firmware/` (left, right, settings_reset). Flashed and
 running on hardware as of 2026-08-10.
 
-Only the half that changed needs reflashing. The central (left) holds the
-keymap, so layout edits are a left-half flash only. `keyball44_right.conf` and
-`keyball44_right.overlay` — trackball, display, Studio — are right-half only.
+**The RIGHT half is the central** (`ZMK_SPLIT_BLE_ROLE_CENTRAL` is defaulted on
+for `SHIELD_KEYBALL44_RIGHT` in `Kconfig.defconfig`). It holds the keymap, is the
+endpoint the host pairs with, runs ZMK Studio, and carries the trackball. The
+left half is the peripheral and only reports key positions.
+
+So **keymap edits are a right-half flash**, as are all of `keyball44_right.conf`
+and `keyball44_right.overlay`. The left half only needs reflashing when its own
+shield config changes — rarely. Reading this backwards wastes a lot of time,
+because a keymap change flashed to the left half silently does nothing.
 
 ## Flashing
 
