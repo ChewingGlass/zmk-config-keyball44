@@ -81,10 +81,25 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | Scroll (momentary) | hold MOD |
 | Pointer speed | `CONFIG_PMW3610_CPI` (1600) **plus** macOS → Mouse → Tracking speed; the slider is the fine adjustment |
 | Fine speed trim | `&zip_xy_scaler 1 1` in `keyball44_right.overlay` — leave at 1/1; ratios below 1 make small movements jolty |
-| Acceleration | off (`CONFIG_PMW3610_ACCELERATION_ALGORITHM=0`); set to `1` and tune `..._SENSITIVITY` (max **10**) to enable |
+| Acceleration | on, `CONFIG_PMW3610_ACCELERATION_SENSITIVITY` (5, max **10**) — the reach for long movements |
 | Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (120; higher = slower) — ball travel per click is `TICK * 25.4 / CPI` mm, currently 1.9mm |
 
-Tuning notes, because two of these are traps:
+**Tune in this order.** There is no single gain that serves both short and long
+movements, which is what makes this feel unfixable if approached backwards:
+
+1. **macOS acceleration off** — System Settings → Mouse → Advanced. Two curves
+   stacked on each other cannot be reasoned about, and the firmware one is the one
+   you can inspect and change.
+2. **Base gain** — `CONFIG_PMW3610_CPI` plus the macOS tracking slider. Set this by
+   how precise **short** movements feel, and ignore long ones for now.
+3. **Acceleration** — raise `CONFIG_PMW3610_ACCELERATION_SENSITIVITY` until **long**
+   movements reach comfortably. Reports of one count or less skip the curve, so this
+   cannot spoil step 2.
+
+Setting base gain by long movements is the trap: short movements then inherit that
+same high gain and land coarsely, and no amount of further tuning recovers them.
+
+Other notes, because several of these are traps:
 
 - **Leave `CONFIG_PMW3610_CPI_DIVIDOR` at 1.** It is not a sensor setting — it is an
   integer divide applied to every motion report. Any value above 1 truncates small
