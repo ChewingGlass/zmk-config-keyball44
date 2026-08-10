@@ -128,8 +128,14 @@ Tuning notes, because two of these are traps:
   between samples. All the rest timings are set explicitly in
   `keyball44_right.conf`; note that an out-of-range value is rejected at init and
   the register silently keeps its default, so respect the bounds documented there.
-  If movement is still missed after an idle spell, `CONFIG_PMW3610_FORCE_AWAKE=y`
-  pins the sensor in RUN mode at a real cost to battery.
+
+  Sampling *is* the wake mechanism — there is no separate low-power motion
+  detector, so each state's sample interval is also its worst-case wake latency.
+  "Deeply idle but instantly awake" is therefore not available; the settings are
+  weighted for battery, with a short-lived fast state (20ms for 9.6s) and deep
+  states at 50ms and 150ms. To trade battery for responsiveness, lengthen
+  `REST1_DOWNSHIFT_TIME_MS` so the fast state lasts longer, or shorten the deep
+  sample times. `CONFIG_PMW3610_FORCE_AWAKE=y` is the extreme: RUN mode always.
 - Every nudge losing its first count is a different problem — that is the
   `zip_xy_scaler`, which banks a fraction below 1 as a remainder and only emits
   once it accumulates. It never discards anything, but a single tiny nudge can
