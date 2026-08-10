@@ -129,9 +129,19 @@ Tuning notes, because two of these are traps:
   7.5–11.25ms connection interval that link carries only ~90–130 events/sec and cannot
   drain 250 reports/sec, so the backlog shows up as lag that grows while you keep
   moving. 125 is the setting for wireless use; 250 is fine with the right half on USB.
-- Still laggy at 125? `CONFIG_BT_PERIPHERAL_PREF_LATENCY` is 16, meaning the radio
-  may skip up to 16 connection events to save power. Lowering it trades battery for
-  responsiveness.
+- **Cursor freezing for a tenth of a second at a time while you move?** That is BLE
+  slave latency, not the sensor. `CONFIG_BT_PERIPHERAL_PREF_LATENCY` in
+  `config/keyball44.conf` is how many connection events the radio may skip; the
+  worst-case silent gap is `(latency + 1) × interval`. The stock 16 at an 11.25ms
+  interval permits **191ms of nothing**, and ZMK never renegotiates it when the
+  pointer becomes active. It is 0 here, which keeps the radio present every interval
+  at some battery cost. Intermediate values and the gap they allow: 2 → 34ms,
+  4 → 56ms, 8 → 101ms.
+
+  To measure rather than guess: screen-record a slow circle, then step through the
+  frames and diff consecutive ones — the cursor is the only thing moving, so frames
+  with no change are frames where it did not move. Beware that the recorder can drop
+  frames too, which looks identical.
 - **Small movements missed, but only sometimes?** The sensor steps down through
   RUN → REST1 → REST2 → REST3 as the ball sits idle, sampling less often at each
   step, and a movement slow enough to finish between two samples is never seen.
