@@ -24,8 +24,38 @@ that isn't obvious from the code.
   `SNIPE 8`, `NAV 1`, `SELECT 2`) MUST match the pmw3610 driver properties in
   `config/boards/shields/keyball_nano/keyball44_right.overlay`
   (`automouse-layer`, `scroll-layers`, `snipe-layers`). Renumber both together.
+  Any new layer goes on the END so those three never have to move — a layer's
+  index is its position among the `keymap` node's children, so appending the
+  `#define` alone is not enough; the layer node must be last too.
 - `scroll-layers = <7 1 2>` is intentional: the ball scrolls while the mod key
   is held (dactyl parity), not just in toggled scroll mode.
+- `automouse-layer = <0>` disables the auto-mouse layer at compile time (the
+  driver wraps the whole mechanism in `#if AUTOMOUSE_LAYER > 0`). Clicks are
+  dedicated keys on the base layer instead. `CONFIG_PMW3610_AUTOMOUSE_TIMEOUT_MS`
+  and `CONFIG_PMW3610_MOVEMENT_THRESHOLD` are dead while this is 0. The MOUSE
+  layer node must stay in the keymap anyway — SCROLL (7) and SNIPE (8) are
+  indexed off its position.
+- `CONFIG_PMW3610_CPI_DIVIDOR` must stay 1. It is an integer divide on each
+  motion report (`raw_x = TOINT16(...) / dividor` in the driver), not a sensor
+  register, so >1 floors small deltas to zero and kills slow tracking. The
+  shipped-config value of 4 was the cause of the "too sensitive but sometimes
+  dead" feel. Change pointer speed with `CONFIG_PMW3610_CPI` instead. If CPI
+  moves, move `CONFIG_PMW3610_SCROLL_TICK` with it — scroll mode ignores the
+  dividor and counts raw ticks, so the two are coupled.
+- Trackball report rate is a latency budget, not a smoothness dial. Every report
+  crosses two BLE hops (right half → left half → host) and the negotiated
+  connection interval is 7.5-11.25ms, so 250Hz backs up and the pointer falls
+  progressively behind while moving. `CONFIG_PMW3610_POLLING_RATE_125` fixed it.
+  The three options are misnamed: `250` and `125_SW` both write register `0x0D`
+  (250Hz) and `125_SW` merely discards every other report in software, which is
+  where its reputation for lag comes from; only plain `125` (register `0x00`)
+  slows the sensor. 250 is fine with the left half on USB.
+- Pointer speed has two independent dials and they answer different complaints.
+  `&zip_xy_scaler <mul> <div>` on `trackball_listener` sets the slow-movement
+  floor (it tracks remainders, so unlike `CPI_DIVIDOR` it loses nothing);
+  `CONFIG_PMW3610_ACCELERATION_*` adds reach on fast flicks. Acceleration is
+  quadratic (`x + x*x/(22 - 2*sensitivity)`) so it gets jumpy fast — sensitivity
+  landed at 1, and 5 was already too much. Sensitivity >10 divides by zero.
 - The mod key is the `nav_mod` macro, not a plain `&mo`: on release it taps
   `&tog_off SELECT` so sticky selection always dies with the mod key. Don't
   "simplify" it to `&mo NAV`.
@@ -51,10 +81,44 @@ needed. Notes baked into the script, learned the hard way:
 - The venv must be first on PATH during builds (nanopb scripts use
   `#!/usr/bin/env python3`).
 - Zephyr SDK 0.16.8 lives at `~/zephyr-sdk-0.16.8` (arm-zephyr-eabi only).
+- `west update` passes `--fetch-opt=--no-tags`. Without it, re-running setup on a
+  populated workspace fails with `can't import from project zephyr`: git's tag
+  auto-following lists all 118 already-present zephyr tags in `FETCH_HEAD` ahead
+  of the fetched branch, west resolves `FETCH_HEAD` to its first line, and zephyr
+  lands on the v1.0.0 tag (2016, pre-west, no `west.yml`). To recover a workspace
+  already in that state: `git -C zephyr update-ref refs/heads/manifest-rev <sha>`
+  for the real `v3.5.0+zmk-fixes` sha (`git -C zephyr ls-remote zmkfirmware
+  refs/heads/v3.5.0+zmk-fixes`), `git -C zephyr checkout --force manifest-rev`,
+  then re-run setup.
 
-Artifacts land in `./firmware/` (left, right, settings_reset). Verified
-compiling on 2026-07-23; **not yet tested on hardware** — the keyboard hadn't
-arrived.
+Artifacts land in `./firmware/` (left, right, settings_reset). Flashed and
+running on hardware as of 2026-08-10.
+
+Only the half that changed needs reflashing. The central (left) holds the
+keymap, so layout edits are a left-half flash only. `keyball44_right.conf` and
+`keyball44_right.overlay` — trackball, display, Studio — are right-half only.
+
+## Flashing
+
+`./flash.sh all` for a first-time flash, or `./flash.sh left|right|reset` for
+one target. It waits for the bootloader drive to mount, copies, and treats the
+drive disappearing as the success signal.
+
+- The physical reset button is on the PCB **directly underneath the display**;
+  the nice!view cover has to come off to reach it. Only needed when a half is
+  running firmware without `&bootloader`. This keymap has it on SYS (hold
+  NUM+SYM, press the outer Shift — locality-aware, each half reboots itself),
+  so day-to-day flashing needs no disassembly.
+- `cp -X` matters. macOS writes extended attributes after the file data, and the
+  board reboots the moment the last UF2 block lands, so a plain `cp` always
+  fails that trailing pass with `Device not configured` even on a good flash.
+- Never `sudo ./flash.sh`. When the board reboots it yanks the USB device out
+  from under the filesystem and macOS can leave `/Volumes/NICENANO` behind as an
+  ordinary directory on the boot disk. Running as root writes root-owned files
+  into that leftover, which stops macOS from auto-cleaning it, and every
+  subsequent flash then silently targets the SSD. `flash.sh` now requires
+  `INFO_UF2.TXT` (written by the bootloader) before it will write anywhere, and
+  warns about leftovers; the fix for one is `sudo rm -rf /Volumes/NICENANO`.
 
 ## Git / remote situation
 
@@ -63,24 +127,35 @@ you cannot push. If a remote is ever wanted, Noah must fork first (a previous
 attempt to `gh repo fork` was permission-blocked). Upstream has no main branch;
 `niceview` (our base) and `oled` are display-specific — don't mix firmware.
 
-## Day-1 checklist (when the keyboard arrives)
+## Day-1 checklist
 
-Flash per README, then verify with Noah, tuning as needed:
+Worked through on hardware 2026-08-10; kept as the regression list. Re-verify
+these after any keymap or trackball change:
 
 1. Halves pair; typing works on the base layer; Enter = tap of the NUM thumb
    key (if Enter feels laggy or misfires while rolling keys, tune the global
    `&lt` block: tapping-term 240ms / balanced / quick-tap 150).
-2. Trackball points; U/J left-click, I/K right-click within 400ms of movement
-   (`CONFIG_PMW3610_AUTOMOUSE_TIMEOUT_MS` in `keyball44_right.conf`); pointer
-   speed via `CONFIG_PMW3610_CPI`; scroll direction via the INVERT_SCROLL opts.
-3. Scroll toggle (bottom-left key) locks/unlocks scroll; ball scrolls while
-   mod held.
+2. Trackball points; left click = bottom-right key of the letter block, right
+   click = corner key past the ball. Both are plain `&mkp` on the base layer,
+   not an auto-mouse layer. Pointer speed via `CONFIG_PMW3610_CPI` plus the
+   `zip_xy_scaler` on the listener; scroll direction via the INVERT_SCROLL opts.
+3. Bottom-left thumb: tap toggles scroll lock, hold is Option/Alt (`scroll_alt`
+   hold-tap). Next thumb key: tap TAB, hold Command. Ball scrolls while mod
+   held.
 4. Mod key: mod+C copies, mod+J/K/L/I arrows, mod+U/O word-jump, mod+H
    end-of-line (shift+ for start), shift+mod+I/K page up/down, mod+D acts as
    shift.
 5. Sticky selection: mod+space, then mod+jkliuo extends selection; mod+C/X/V
    exits (copy/cut also tap ESC — dactyl parity; drop ESC from the sel_copy/
    sel_cut macros if it misbehaves in some app); releasing mod exits.
-6. SYS layer (hold NUM+SYM): BT profile select/clear for pairing to more
-   devices; bootloader keys are locality-aware (left-side key reboots left
-   half, right-side key the right half).
+6. SYS layer (hold NUM+SYM): A–G select BT profiles 0–4, Q/W/E pick output,
+   X/C clear this profile / all profiles; bootloader and reset keys are
+   locality-aware (left-side key acts on the left half, right-side key on the
+   right). BT profile select briefly lived on NUM's left half and
+   caused a "dead keyboard": the NUM thumb key is adjacent to MOD, so a thumb
+   catching both ranks NUM (4) over NAV (1) and `mod+D` fired `&bt BT_SEL 2` —
+   an unpaired profile. Symptoms were displays fine, base layer, BLE showing
+   connected, zero input; and `&bt` selection persists across a power cycle, so
+   only `BT_SEL 0` recovers it. Keep destructive bindings off single-thumb-key
+   layers. Space was also tried as a layer key and rejected — too hot a key for
+   a hold-tap.

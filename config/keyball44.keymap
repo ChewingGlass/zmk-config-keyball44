@@ -47,6 +47,19 @@
             toggle-mode = "off";
         };
 
+        // Bottom-left thumb (the keycap reads "alt"): tap still toggles trackball
+        // scroll mode, hold is a real Option/Alt. &mt can't express this — it
+        // takes a keycode on both sides, and the tap here is a layer toggle — so
+        // this is a hold-tap with &kp on the hold side and &tog on the tap side.
+        scroll_alt: scroll_alt {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <150>;
+            bindings = <&kp>, <&tog>;
+        };
+
         // NAV cluster shift variants (mod-morph suppresses the held shift,
         // matching the old Vial key-override behavior)
         nav_up: nav_up {
@@ -155,8 +168,8 @@
             bindings = <
 &kp ESC         &kp Q  &kp W         &kp E          &kp R     &kp T              &kp Y      &kp U  &kp I      &kp O    &kp P      &kp BSPC
 &kp CAPS        &kp A  &kp S         &kp D          &kp F     &kp G              &kp H      &kp J  &kp K      &kp L    &kp SEMI   &kp SQT
-&kp LSHFT       &kp Z  &kp X         &kp C          &kp V     &kp B              &kp N      &kp M  &kp COMMA  &kp DOT  &kp SLASH  &kp RSHFT
-&tog SCROLL     &mt LALT TAB  &lt NUM ENTER  &nav_mod  &mo SYM         &kp BSPC  &kp SPACE                                        &kp DEL
+&kp LSHFT       &kp Z  &kp X         &kp C          &kp V     &kp B              &kp N      &kp M  &kp COMMA  &kp DOT  &kp SLASH  &mkp LCLK
+&scroll_alt LALT SCROLL  &mt LGUI TAB  &lt NUM ENTER  &nav_mod  &mo SYM  &kp BSPC  &kp SPACE                                        &mkp RCLK
             >;
         };
 
@@ -190,33 +203,44 @@
             >;
         };
 
+        // Nothing destructive belongs on this half. The NUM thumb key sits next
+        // to MOD, so a thumb that catches both puts NUM (layer 4) over NAV
+        // (layer 1) and every left-half NUM binding fires during ordinary MOD
+        // use — mod+C, mod+V, mod+W and mod+D are all everyday combos. Bluetooth
+        // profile select lived here briefly and cost a dead keyboard: it silently
+        // drops all input and the selection persists across a power cycle. It is
+        // on SYS instead, which needs two thumb keys held at once.
         number_layer {
             label = "NUM";
             bindings = <
-&trans  &trans  &trans      &trans      &trans      &trans                 &trans  &kp KP_N7  &kp KP_N8  &kp KP_N9  &trans  &trans
-&trans  &trans  &kp LS(LA(S))  &kp LS(LA(D))  &kp LS(LA(F))  &trans        &trans  &kp KP_N4  &kp KP_N5  &kp KP_N6  &trans  &trans
-&trans  &trans  &trans      &trans      &trans      &trans                 &trans  &kp KP_N1  &kp KP_N2  &kp KP_N3  &trans  &trans
-&trans  &trans  &trans      &trans      &trans              &kp LG(SPACE)  &kp KP_N0                                        &trans
+&trans  &trans  &trans         &trans         &trans         &trans                 &trans  &kp KP_N7  &kp KP_N8  &kp KP_N9  &trans  &trans
+&trans  &trans  &kp LS(LA(S))  &kp LS(LA(D))  &kp LS(LA(F))  &trans                 &trans  &kp KP_N4  &kp KP_N5  &kp KP_N6  &trans  &trans
+&trans  &trans  &trans         &trans         &trans         &trans                 &trans  &kp KP_N1  &kp KP_N2  &kp KP_N3  &trans  &trans
+&trans  &trans  &trans         &trans         &trans                 &kp LG(SPACE)  &kp KP_N0                                        &trans
             >;
         };
 
         system_layer {
             label = "SYS";
             bindings = <
-&none        &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_CLR         &kp F1  &kp F2   &kp F3   &kp F4   &kp F5      &kp F6
-&none        &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &none         &none              &kp F7  &kp F8   &kp F9   &kp F10  &kp F11     &kp F12
-&bootloader  &sys_reset    &none         &none         &none         &none              &none   &none    &none    &none    &sys_reset  &bootloader
+&none        &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2    &bt BT_SEL 3  &bt BT_SEL 4       &kp F1  &kp F2   &kp F3   &kp F4   &kp F5      &kp F6
+&none        &out OUT_USB  &out OUT_BLE  &out OUT_TOG    &none         &none              &kp F7  &kp F8   &kp F9   &kp F10  &kp F11     &kp F12
+&bootloader  &sys_reset    &bt BT_CLR    &bt BT_CLR_ALL  &none         &none              &none   &none    &none    &none    &sys_reset  &bootloader
 &trans       &trans        &trans        &trans        &trans                  &trans   &trans                                         &trans
             >;
         };
 
+        // Inert: clicks are on dedicated keys, so the driver's automouse-layer is
+        // 0 and this never activates. The node has to stay regardless — a layer's
+        // index is its position among these children, and the driver hard-codes
+        // SCROLL as 7 and SNIPE as 8.
         mouse_layer {
             label = "MOUSE";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans            &trans  &mkp LCLK  &mkp RCLK  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans            &trans  &mkp LCLK  &mkp RCLK  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans            &trans  &trans     &trans     &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans          &trans    &trans                                        &trans
+&trans  &trans  &trans  &trans  &trans  &trans            &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans            &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans            &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans          &trans    &trans                                  &trans
             >;
         };
 

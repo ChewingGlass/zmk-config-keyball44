@@ -5,6 +5,7 @@
  */
  
 #include "keyball44.dtsi"
+#include <input/processors.dtsi>
 
 &default_transform {
     col-offset = <6>;
@@ -57,7 +58,12 @@
 	/* Layer indices must match config/keyball44.keymap:
 	   6=MOUSE, 7=SCROLL, 1=NAV, 2=SELECT, 8=SNIPE.
 	   NAV/SELECT in scroll-layers = ball scrolls while the mod key is held. */
-	automouse-layer = <6>;
+	/* 0 disables the auto-mouse layer outright (the driver guards the whole
+	   mechanism with #if AUTOMOUSE_LAYER > 0). Clicks are on dedicated keys
+	   now, so nothing needs the ball to flip a layer — and this removes stray
+	   clicks from brushing the ball while typing. Layer 6 still exists in the
+	   keymap because SCROLL and SNIPE are indexed off it. */
+	automouse-layer = <0>;
 	scroll-layers = <7 1 2>;
 	snipe-layers = <8>;
     };
@@ -68,5 +74,14 @@
     compatible = "zmk,input-listener";
     device = <&trackball>;
 
+    /* Fine pointer-speed trim, as <multiplier divisor>. CONFIG_PMW3610_CPI only
+       moves in steps of 200, which is a 50% jump at this end of the range; this
+       scales the reports instead. Unlike the driver's CPI_DIVIDOR it carries the
+       remainder across reports (track-remainders), so slow movement survives.
+       Effective speed = CPI * mul / div, here 400 * 7/8 = 350.
+       Only REL_X/REL_Y are matched, so scroll speed is unaffected.
+       This sets the slow-movement floor; long throws are handled by
+       CONFIG_PMW3610_ACCELERATION_* rather than by raising this. */
+    input-processors = <&zip_xy_scaler 7 8>;
   };
 };

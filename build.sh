@@ -27,7 +27,11 @@ setup() {
     if [ ! -d .west ]; then
         $WEST init -l config
     fi
-    $WEST update --narrow --fetch-opt=--depth=1
+    # --no-tags: on a re-run, git's tag auto-following lists every already-present
+    # tag in FETCH_HEAD ahead of the fetched branch. West resolves FETCH_HEAD to its
+    # first line, so zephyr would get checked out at an ancient tag (v1.0.0, which
+    # predates west and has no west.yml) instead of v3.5.0+zmk-fixes.
+    $WEST update --narrow --fetch-opt=--depth=1 --fetch-opt=--no-tags
     $WEST zephyr-export
     uv pip install --python .venv/bin/python -r zephyr/scripts/requirements-base.txt
     # setuptools<81: nanopb's generator (ZMK Studio protobufs) still imports pkg_resources

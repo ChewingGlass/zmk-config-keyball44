@@ -4,8 +4,9 @@ ZMK firmware for the MochuKeeb Keyball44 (nice!nano v2, nice!view displays, PMW3
 trackball). This branch (`keyball44-noah`) ports my corne layout and rebuilds the two
 killer features from my old dactyl:
 
-- **Auto-mouse clicks** — move the trackball, and for the next 400ms **U/J = left
-  click, I/K = right click**. Stop touching the ball and they go back to typing.
+- **Dedicated mouse buttons** — the bottom-right key of the letter block is **left
+  click**, the corner key past the trackball is **right click**. They are always
+  clicks, on every layer, so a stray brush of the ball can never produce one.
 - **Sticky selection** — emacs-style mark mode: `mod+space` arms it, then the nav keys
   extend the selection until you copy/cut/paste or release `mod`.
 
@@ -16,24 +17,26 @@ All shortcuts are macOS-flavored (Cmd-based).
 ```
 ESC    Q  W  E  R  T   │   Y  U  I  O  P   BSPC
 CAPS   A  S  D  F  G   │   H  J  K  L  ;   '
-LSHFT  Z  X  C  V  B   │   N  M  ,  .  /   RSHFT
+LSHFT  Z  X  C  V  B   │   N  M  ,  .  /   L-CLICK
                        │
-SCROLL TAB ENTER MOD SYM │ BSPC SPACE   ◉ball  DEL
- tog   ⇧alt ⇧num  ⇧nav ⇧ │              (corner key)
+SCROLL TAB ENTER MOD SYM │ BSPC SPACE   ◉ball  R-CLICK
+ ⇧alt  ⇧cmd ⇧num  ⇧nav ⇧ │              (corner key)
 ```
+
+There is no right Shift and no Delete — those two keys became the mouse buttons.
 
 Left thumb row, left to right:
 
 | Key | Tap | Hold |
 | --- | --- | --- |
-| bottom-left | toggle trackball **scroll mode** (tap again to exit) | — |
-| next | `TAB` | `Left Alt` |
+| bottom-left (keycap says *alt*) | toggle trackball **scroll mode** (tap again to exit) | `Option`/`Alt` |
+| next (keycap says *command*) | `TAB` | `Command` |
 | Enter key | `ENTER` | **NUM** layer (numpad) |
 | **MOD** | — | **NAV** layer (your old `LM(1, GUI)` key) |
 | inner | — | **SYM** layer |
 
-Right side: `BSPC` + `SPACE` thumbs, `DEL` on the corner key past the trackball,
-`ENTER` is on the left thumb now (tap the NUM key).
+Right side: `BSPC` + `SPACE` thumbs, **right click** on the corner key past the
+trackball, `ENTER` is on the left thumb now (tap the NUM key).
 
 ## The MOD key (NAV layer)
 
@@ -70,12 +73,62 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | Thing | How |
 | --- | --- |
 | Point | just move the ball |
-| Left / right click | `U` or `J` / `I` or `K` within 400ms of ball movement |
+| Left click | bottom-right key of the letter block (where right Shift would be) |
+| Right click | corner key past the trackball |
 | Scroll mode (locked) | tap the bottom-left key; tap again to exit |
 | Scroll (momentary) | hold MOD |
-| Click timeout | `CONFIG_PMW3610_AUTOMOUSE_TIMEOUT_MS` in `config/boards/shields/keyball_nano/keyball44_right.conf` |
-| Pointer speed | `CONFIG_PMW3610_CPI` (1200), same file |
-| Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (32; higher = slower) |
+| Pointer speed (coarse) | `CONFIG_PMW3610_CPI` (400), same file — steps of 200 only |
+| Pointer speed (fine) | `&zip_xy_scaler 7 8` on `trackball_listener` in `keyball44_right.overlay` — effective speed is `CPI * mul / div`, currently 350 |
+| Reach on fast flicks | `CONFIG_PMW3610_ACCELERATION_SENSITIVITY` (1, max **10**); `CONFIG_PMW3610_ACCELERATION_ALGORITHM=0` disables it |
+| Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (11; higher = slower) |
+
+Tuning notes, because two of these are traps:
+
+- **Leave `CONFIG_PMW3610_CPI_DIVIDOR` at 1.** It is not a sensor setting — it is an
+  integer divide applied to every motion report. Any value above 1 truncates small
+  deltas to zero, so slow ball movement is discarded entirely and the pointer only
+  responds once you move fast enough to clear the divisor. Set speed with CPI, which
+  the sensor applies in hardware without dropping counts.
+- **`SCROLL_TICK` is tied to `CPI`.** Scroll mode ignores the divisor and counts raw
+  sensor ticks, so halving CPI halves scroll speed unless `SCROLL_TICK` comes down
+  with it. The `zip_xy_scaler` does *not* affect scroll — it only matches
+  `REL_X`/`REL_Y` — so trimming speed there leaves scrolling alone.
+- **Prefer the scaler over CPI for small adjustments.** CPI's 200-step granularity is
+  a 50% jump down at this end of the range. The scaler tracks remainders across
+  reports, so it slows the pointer without reintroducing the truncation problem.
+- **Two separate dials, don't confuse them.** The scaler sets how fast slow movement
+  is; acceleration (`output = x + x²/divider`, `divider = 22 - 2*sensitivity`) sets
+  how much extra fast movement gets. Reports of 1 count or less skip acceleration
+  entirely, so raising sensitivity never coarsens precise movement. "Can't cross the
+  screen" → raise sensitivity. "Too twitchy when nudging" → lower the scaler.
+- **Acceleration gets jumpy quickly.** The quadratic term means the boost grows with
+  the square of speed, so the gap between a normal move and a fast one widens fast.
+  Sensitivity above ~2 is noticeably aggressive on a ball this small. If the pointer
+  feels unpredictable rather than merely fast, that is acceleration, not speed —
+  turn it off with `ACCELERATION_ALGORITHM=0` and raise the scaler instead.
+- **Never set `ACCELERATION_SENSITIVITY` above 10.** Kconfig accepts up to 100, but
+  the driver computes `divider = 22 - 2*sensitivity`, so 11 divides by zero.
+- **Pointer lags over Bluetooth?** Report rate, not speed. The polling options are
+  misnamed: `250` and `125_SW` both run the sensor at 250Hz, and `125_SW` merely
+  discards every other report and folds it into the next (hence its extra latency).
+  Only plain `CONFIG_PMW3610_POLLING_RATE_125` slows the sensor itself. Every report
+  crosses two BLE hops here (right half → left half → host), and at the negotiated
+  7.5–11.25ms connection interval the radio cannot drain 250 reports/sec — the
+  backlog shows up as lag that grows while you keep moving. 125 is the setting for
+  wireless use; 250 is fine with the left half on USB.
+- Still laggy at 125? `CONFIG_BT_PERIPHERAL_PREF_LATENCY` is 16, meaning the radio
+  may skip up to 16 connection events to save power. Lowering it trades battery for
+  responsiveness.
+- Ball dead for a moment after sitting idle? The sensor downshifts to a low-power
+  sample rate. `CONFIG_PMW3610_RUN_DOWNSHIFT_TIME_MS` is already at its 3264ms
+  maximum; `CONFIG_PMW3610_FORCE_AWAKE=y` pins it awake at real battery cost.
+
+The auto-mouse layer is off (`automouse-layer = <0>` in `keyball44_right.overlay`),
+which compiles the mechanism out of the driver — moving the ball never changes a
+layer. `CONFIG_PMW3610_AUTOMOUSE_TIMEOUT_MS` and `CONFIG_PMW3610_MOVEMENT_THRESHOLD`
+are therefore inert; they only matter if the auto-mouse layer is turned back on. The
+MOUSE layer node stays in the keymap regardless, because SCROLL and SNIPE are indexed
+off its position.
 
 A SNIPE (precision) layer exists for the driver but has no key bound — bind `&mo SNIPE`
 somewhere in `config/keyball44.keymap` if you want it.
@@ -87,9 +140,23 @@ somewhere in `config/keyball44.keymap` if you want it.
   right thumbs. Same as the corne's symbol layer.
 - **NUM** (hold the Enter key): right-hand numpad (`789 / 456 / 123`, `0` on SPACE),
   ⌥⇧S/D/F on the left home row, ⌘SPACE (Spotlight) on the BSPC thumb.
-- **SYS** (hold NUM + SYM together): Bluetooth profile select/clear, USB/BLE output
-  toggle, F1–F12, and `bootloader`/`reset` (bottom-left keys affect the left half,
-  bottom-right keys the right half).
+
+  Nothing destructive goes on NUM's left half. Its thumb key is adjacent to MOD, so
+  a thumb catching both puts NUM (layer 4) above NAV (layer 1) and fires left-half
+  NUM bindings during ordinary `mod+C` / `mod+V` / `mod+D` use.
+- **SYS** (hold NUM + SYM together — two thumb keys, so it can't be hit by accident):
+
+  | Key | Action |
+  | --- | --- |
+  | `A` `S` `D` `F` `G` | select Bluetooth profile 0–4 |
+  | `Q` `W` `E` | output USB / BLE / toggle |
+  | `X` / `C` | clear this profile's pairing / clear **all** profiles |
+  | `Z` / outer Shift | `sys_reset` / `bootloader` — left keys act on the left half, right keys on the right |
+  | right half | F1–F12 |
+
+  **If the keyboard ever goes silent but the displays still work**, you are almost
+  certainly on an unpaired Bluetooth profile: hold NUM+SYM and press `A` for profile
+  0. The selection is stored in flash, so power-cycling will *not* undo it.
 
 ## Day-1 install
 
@@ -133,14 +200,25 @@ reboots itself:
 1. Left half ← `keyball44_left ... .uf2`
 2. Right half ← `keyball44_right ... .uf2`
 
+`./flash.sh all` does the copying instead: it walks the whole first-time sequence
+(settings_reset on both halves, power-cycle, then the real firmware on each),
+waiting for the drive to mount at each step so the only thing to do by hand is the
+double-tap. `./flash.sh left|right|reset` flashes a single target.
+
+**Finding the reset button**: it sits on the PCB *directly underneath the display*,
+so the protective cover over the nice!view has to come off to reach it. This is a
+one-time chore — this keymap puts `&bootloader` on the SYS layer, so afterwards hold
+the two thumb keys (NUM + SYM) and press the outer Shift key (left Shift reboots the
+left half, right Shift the right).
+
 ### 3. Pair
 
 Turn both halves on. They pair to each other automatically (left is central). Then on
 the Mac: System Settings → Bluetooth → connect to **Keyball44**. The left half is the
 one that talks to the computer — plug USB into it if you prefer wired.
 
-Five Bluetooth profiles are available: hold NUM+SYM and use the top-left row
-(`BT_SEL 0–3`, `BT_CLR` clears the current profile's pairing).
+Five Bluetooth profiles are available (0–4): hold NUM+SYM together (the SYS layer)
+and press `A`–`G` to switch, `X` to clear the current profile's pairing.
 
 ### 4. If something's weird
 
