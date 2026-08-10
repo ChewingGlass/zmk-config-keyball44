@@ -77,10 +77,10 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | Right click | corner key past the trackball |
 | Scroll mode (locked) | tap the bottom-left key; tap again to exit |
 | Scroll (momentary) | hold MOD |
-| Pointer speed (coarse) | `CONFIG_PMW3610_CPI` (400), same file — steps of 200 only |
-| Pointer speed (fine) | `&zip_xy_scaler 7 8` on `trackball_listener` in `keyball44_right.overlay` — effective speed is `CPI * mul / div`, currently 350 |
-| Reach on fast flicks | `CONFIG_PMW3610_ACCELERATION_SENSITIVITY` (1, max **10**); `CONFIG_PMW3610_ACCELERATION_ALGORITHM=0` disables it |
-| Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (11; higher = slower) |
+| Pointer resolution | `CONFIG_PMW3610_CPI` (800) — the floor on what physically registers; raise if small movements get dropped |
+| Pointer speed | `&zip_xy_scaler 7 16` on `trackball_listener` in `keyball44_right.overlay` — effective speed is `CPI * mul / div`, currently 350 |
+| Acceleration | off (`CONFIG_PMW3610_ACCELERATION_ALGORITHM=0`); set to `1` and tune `..._SENSITIVITY` (max **10**) to enable |
+| Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (22; higher = slower) — must track CPI |
 
 Tuning notes, because two of these are traps:
 
@@ -93,9 +93,12 @@ Tuning notes, because two of these are traps:
   sensor ticks, so halving CPI halves scroll speed unless `SCROLL_TICK` comes down
   with it. The `zip_xy_scaler` does *not* affect scroll — it only matches
   `REL_X`/`REL_Y` — so trimming speed there leaves scrolling alone.
-- **Prefer the scaler over CPI for small adjustments.** CPI's 200-step granularity is
-  a 50% jump down at this end of the range. The scaler tracks remainders across
-  reports, so it slows the pointer without reintroducing the truncation problem.
+- **CPI is resolution; the scaler is speed.** Run CPI high and scale down, never the
+  reverse. CPI sets the smallest movement that physically registers — at 400 CPI
+  anything under 0.064mm produces zero counts and no downstream setting can recover
+  it — so small movements getting dropped during active use means CPI is too low.
+  The scaler then trims speed without discarding those counts, because it carries
+  remainders across reports.
 - **Two separate dials, don't confuse them.** The scaler sets how fast slow movement
   is; acceleration (`output = x + x²/divider`, `divider = 22 - 2*sensitivity`) sets
   how much extra fast movement gets. Reports of 1 count or less skip acceleration
