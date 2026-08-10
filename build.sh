@@ -77,11 +77,18 @@ build_debug() {
     export ZEPHYR_SDK_INSTALL_DIR="$SDK_DIR"
     mkdir -p firmware
     echo "=== Building keyball44_right_debug (USB logging, no Studio) ==="
-    $WEST build -s zmk/app -d build/keyball44_right_debug -b nice_nano_v2 \
-        -S zmk-usb-logging -- \
+    # Built from a clean directory: a cached CMake configure silently keeps the
+    # previous snippet/overlay set, which is easy to mistake for a build that
+    # worked. Overlay and conf are supplied directly rather than via the
+    # zmk-usb-logging snippet — the snippet appends to these same two variables,
+    # so passing either explicitly would override it and yield firmware with no
+    # CDC endpoint, with no error to show for it.
+    rm -rf build/keyball44_right_debug
+    $WEST build -s zmk/app -d build/keyball44_right_debug -b nice_nano_v2 -- \
         -DSHIELD="keyball44_right nice_view_adapter nice_view" \
         -DZMK_CONFIG="$PWD/config" \
-        -DEXTRA_CONF_FILE="$PWD/config/debug.conf"
+        -DEXTRA_CONF_FILE="$PWD/config/debug.conf" \
+        -DEXTRA_DTC_OVERLAY_FILE="$PWD/config/debug.overlay"
     cp build/keyball44_right_debug/zephyr/zmk.uf2 firmware/keyball44_right_debug.uf2
     echo
     echo "Wrote firmware/keyball44_right_debug.uf2"

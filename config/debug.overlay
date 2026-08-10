@@ -1,0 +1,26 @@
+/*
+ * Devicetree half of the diagnostic build (see config/debug.conf).
+ *
+ * This replicates ZMK's zmk-usb-logging snippet rather than using it. The
+ * snippet works by *appending* to EXTRA_CONF_FILE and EXTRA_DTC_OVERLAY_FILE,
+ * so passing either of those explicitly on the build command line overrides the
+ * snippet's contribution and it silently does nothing — the build succeeds and
+ * produces firmware with no CDC endpoint at all. Supplying both files directly
+ * avoids depending on that interaction.
+ *
+ * CONFIG_USB_CDC_ACM depends on DT_HAS_ZEPHYR_CDC_ACM_UART_ENABLED, which is
+ * what this node provides; without it, CONFIG_ZMK_USB_LOGGING cannot be set.
+ */
+
+/ {
+    chosen {
+        zephyr,console = &debug_log_uart;
+        zephyr,shell-uart = &debug_log_uart;
+    };
+};
+
+&zephyr_udc0 {
+    debug_log_uart: debug_log_uart {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};
