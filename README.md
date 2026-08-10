@@ -79,10 +79,10 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | Right click | corner key past the trackball |
 | Scroll mode (locked) | tap the bottom-left key; tap again to exit |
 | Scroll (momentary) | hold MOD |
-| Pointer speed | `CONFIG_PMW3610_CPI` (400) — steps of 200; this is the knob to turn |
+| Pointer speed | `CONFIG_PMW3610_CPI` (1600) **plus** macOS → Mouse → Tracking speed; the slider is the fine adjustment |
 | Fine speed trim | `&zip_xy_scaler 1 1` in `keyball44_right.overlay` — leave at 1/1; ratios below 1 make small movements jolty |
 | Acceleration | off (`CONFIG_PMW3610_ACCELERATION_ALGORITHM=0`); set to `1` and tune `..._SENSITIVITY` (max **10**) to enable |
-| Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (11; higher = slower) — must track CPI |
+| Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (120; higher = slower) — ball travel per click is `TICK * 25.4 / CPI` mm, currently 1.9mm |
 
 Tuning notes, because two of these are traps:
 
@@ -95,16 +95,20 @@ Tuning notes, because two of these are traps:
   sensor ticks, so halving CPI halves scroll speed unless `SCROLL_TICK` comes down
   with it. The `zip_xy_scaler` does *not* affect scroll — it only matches
   `REL_X`/`REL_Y` — so trimming speed there leaves scrolling alone.
-- **Set speed with CPI; keep the scaler at 1/1.** Running the sensor high and scaling
-  down in software is not equivalent. Moving slowly, the sensor emits roughly one
-  count per report, and the scaler turns each count into `mul/div` pixels — so any
-  ratio below 1 makes some reports emit zero and small movements arrive in visible
-  steps, while fast movement stays smooth because its counts are large. That is the
-  signature: **smooth on long movements, jolty on small ones = the scaler ratio**.
-  `CPI 800 × 7/16` and `CPI 400 × 1/1` reach nearly the same speed and resolve nearly
-  the same smallest movement (0.073mm vs 0.064mm), but the first emits a pixel every
-  2.3 reports and the second every report. If you truly need a speed between two
-  200-CPI steps, `7/8` is the gentlest ratio worth using.
+- **High CPI here, speed turned down in macOS.** Jerky slow movement is granularity:
+  one count is the smallest step the pointer can take, so at 400 CPI (0.064mm per
+  count) a slow roll moves the cursor a whole pixel at a time. 1600 CPI is 0.016mm
+  per count — four times finer.
+
+  Scaling back down must not happen in firmware. Both knobs available here are
+  integer divides: `CPI_DIVIDOR` discards the remainder, and `zip_xy_scaler` keeps it
+  but still emits whole pixels, so **any ratio below 1 makes some reports emit zero**
+  and puts the stepping right back. macOS accumulates fractionally inside its own
+  acceleration curve, so turning the tracking slider down costs nothing. Keep the
+  scaler at `1 1`.
+
+  CPI does not change the report *rate* — one report per poll either way — so raising
+  it adds no BLE traffic and cannot bring back the 250Hz pointer lag.
 - **Two separate dials, don't confuse them.** The scaler sets how fast slow movement
   is; acceleration (`output = x + x²/divider`, `divider = 22 - 2*sensitivity`) sets
   how much extra fast movement gets. Reports of 1 count or less skip acceleration
