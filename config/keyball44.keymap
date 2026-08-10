@@ -104,6 +104,26 @@
             mods = <(MOD_LSFT|MOD_RSFT)>;
         };
 
+        // Word-jump keys. The Vial key-overrides carried negative_mod_mask 34,
+        // meaning the word-jump was suppressed while shift was held and the key
+        // fell through to itself with the mod key's Cmd still applied — so
+        // mod+shift+O was Cmd+Shift+O and mod+shift+U was Cmd+Shift+U, both app
+        // shortcuts. Without these morphs shift merely stacks onto the arrow and
+        // produces select-a-word-over instead.
+        nav_word_right: nav_word_right {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp LA(RIGHT)>, <&kp LG(LS(O))>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+
+        nav_word_left: nav_word_left {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp LA(LEFT)>, <&kp LG(LS(U))>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+
         nav_line: nav_line {
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
@@ -190,7 +210,7 @@
         nav_layer {
             label = "NAV";
             bindings = <
-&kp LG(ESC)  &kp LG(Q)  &kp LG(W)  &kp LA(BSPC)  &kp LG(R)  &kp LG(T)                 &kp LG(Y)  &kp LA(LEFT)  &nav_up    &kp LA(RIGHT)  &kp LG(P)      &kp LG(BSPC)
+&kp LG(ESC)  &kp LG(Q)  &kp LG(W)  &kp LA(BSPC)  &kp LG(R)  &kp LG(T)                 &kp LG(Y)  &nav_word_left  &nav_up  &nav_word_right  &kp LG(P)    &kp LG(BSPC)
 &trans       &kp LG(A)  &kp LG(S)  &kp LSHFT     &kp LG(F)  &kp LG(G)                 &nav_line  &nav_left     &nav_down  &nav_right     &kp LG(SEMI)   &kp LG(SQT)
 &trans       &kp LG(Z)  &kp LG(X)  &kp LG(C)     &kp LG(V)  &kp LG(B)                 &kp LG(N)  &kp LG(LBKT)  &kp LG(RBKT)  &kp LG(DOT)  &kp LG(SLASH)  &trans
 &trans       &kp LG(TAB)  &trans   &trans        &trans                &kp LG(BSPC)   &tog_on SELECT                                                    &trans

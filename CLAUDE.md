@@ -93,6 +93,14 @@ that isn't obvious from the code.
 - All shortcuts are macOS-flavored (Cmd/Opt). The corne/dactyl configs were Mac.
 - ZMK is pinned to v0.3 in `config/west.yml`; `toggle-mode = "on"/"off"` on
   `zmk,behavior-toggle-layer` requires ≥ v0.3.
+- When porting a Vial key-override, `negative_mod_mask` is as important as
+  `trigger_mods`: it lists mods that *suppress* the override, so the key falls
+  through to itself with whatever `LM()` was applying still attached. Several
+  NAV keys rely on this — `mod`+shift+`O`/`U` are Cmd+Shift+O/U (app shortcuts),
+  not shifted word-jumps. Missing it silently turns them into text selection,
+  which looks like a sticky-selection bug and is not one. One override remains
+  unported by choice: `KC_F` + shift on NAV mapped to `KC_NO`, disabling
+  `mod`+shift+`F`; here it still sends Cmd+Shift+F.
 - ZMK keycode spelling: QMK's `LSA(x)` is `LS(LA(x))` — already bit us once.
 - ZMK Studio is enabled (right half over USB). Studio edits are runtime
   overrides; if a flashed keymap change doesn't seem to apply, a Studio

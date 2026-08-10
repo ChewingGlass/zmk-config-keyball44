@@ -51,7 +51,7 @@ Hold MOD and every key becomes `Cmd+<key>` (`mod+C` = copy, `mod+W` = close tab,
 | --- | --- | --- |
 | `I` / `K` | ↑ / ↓ | Page Up / Page Down |
 | `J` / `L` | ← / → | Ctrl+←/→ (switch desktops) |
-| `U` / `O` | word left / word right (⌥←/⌥→) | — |
+| `U` / `O` | word left / word right (⌥←/⌥→) | ⌘⇧U / ⌘⇧O (app shortcuts — ⌘⇧O is VSCode's Go to Symbol) |
 | `H` | end of line (⌘→) | start of line (⌘←) |
 | `E` | delete word back (⌥⌫) | — |
 | `M` / `,` | back / forward (⌘[ / ⌘]) | — |
