@@ -139,9 +139,13 @@ somewhere in `config/keyball44.keymap` if you want it.
   `^ & * + =` / `] ( ) ' "` on the right, `- _ |` on the bottom, `_`/`-` on the
   right thumbs. Same as the corne's symbol layer.
 - **NUM** (hold the Enter key): right-hand numpad (`789 / 456 / 123`, `0` on SPACE),
-  ⌥⇧S/D/F on the left home row, `Ctrl+C` on `C` (the terminal interrupt — macOS
-  uses ⌘C for copy, so it has nowhere else to live), ⌘SPACE (Spotlight) on the
-  BSPC thumb.
+  ⌥⇧S/D/F on the left home row, ⌘SPACE (Spotlight) on the BSPC thumb, and the
+  terminal control keys macOS has no room for because ⌘ owns those chords:
+
+  | Key | Sends | For |
+  | --- | --- | --- |
+  | `C` | `Ctrl+C` | interrupt |
+  | `R` | `Ctrl+R` | reverse history search |
 
   Nothing destructive goes on NUM's left half. Its thumb key is adjacent to MOD, so
   a thumb catching both puts NUM (layer 4) above NAV (layer 1) and fires left-half
