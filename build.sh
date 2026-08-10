@@ -69,9 +69,31 @@ build_all() {
     ls -la firmware/*.uf2
 }
 
+# Diagnostic right-half firmware: USB CDC logging of the trackball pipeline.
+# Omits the studio snippet because ZMK Studio wants the same CDC endpoint.
+build_debug() {
+    export PATH="$PWD/.venv/bin:$PATH"
+    export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+    export ZEPHYR_SDK_INSTALL_DIR="$SDK_DIR"
+    mkdir -p firmware
+    echo "=== Building keyball44_right_debug (USB logging, no Studio) ==="
+    $WEST build -s zmk/app -d build/keyball44_right_debug -b nice_nano_v2 \
+        -S zmk-usb-logging -- \
+        -DSHIELD="keyball44_right nice_view_adapter nice_view" \
+        -DZMK_CONFIG="$PWD/config" \
+        -DEXTRA_CONF_FILE="$PWD/config/debug.conf"
+    cp build/keyball44_right_debug/zephyr/zmk.uf2 firmware/keyball44_right_debug.uf2
+    echo
+    echo "Wrote firmware/keyball44_right_debug.uf2"
+    echo "Flash:   ./flash.sh debug"
+    echo "Capture: ./capture-log.sh 15 > trackball.log   (move the ball while it runs)"
+    echo "This build has no ZMK Studio. Reflash with ./flash.sh right when done."
+}
+
 case "${1:-build}" in
     setup) setup ;;
     build) build_all ;;
+    debug) build_debug ;;
     clean) rm -rf build firmware; echo "Removed build/ and firmware/" ;;
-    *) echo "Usage: $0 [setup|build|clean]"; exit 1 ;;
+    *) echo "Usage: $0 [setup|build|debug|clean]"; exit 1 ;;
 esac

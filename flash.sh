@@ -6,6 +6,8 @@
 #   ./flash.sh left     keyball44_left.uf2
 #   ./flash.sh right    keyball44_right.uf2  (the trackball half)
 #   ./flash.sh reset    settings_reset.uf2   (same file for either half)
+#   ./flash.sh debug    keyball44_right_debug.uf2 — diagnostic build with USB
+#                       logging and no ZMK Studio; see ./capture-log.sh
 #
 # To get a half into bootloader mode: pop the protective cover off the display
 # and double-press the reset button on the PCB directly underneath the screen.
@@ -140,7 +142,7 @@ flash_all() {
 
     echo
     echo "All four written. Turn both halves on — they pair to each other"
-    echo "automatically (left is central), then connect to 'Keyball44' in"
+    echo "automatically (right is central), then connect to 'Keyball44' in"
     echo "System Settings -> Bluetooth."
 }
 
@@ -151,5 +153,6 @@ case "${1:-}" in
     left)  flash_one keyball44_left  "keyball44_left -> LEFT half" ;;
     right) flash_one keyball44_right "keyball44_right -> RIGHT half" ;;
     reset) flash_one settings_reset  "settings_reset" ;;
-    *)     echo "Usage: $0 [all|left|right|reset]"; exit 1 ;;
+    debug) flash_one keyball44_right_debug "keyball44_right_debug -> RIGHT half (USB logging, no Studio)" ;;
+    *)     echo "Usage: $0 [all|left|right|reset|debug]"; exit 1 ;;
 esac
