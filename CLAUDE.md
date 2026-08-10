@@ -68,6 +68,12 @@ that isn't obvious from the code.
   A genuine sensor or link dropout interrupts motion abruptly, with large reports
   either side. Zero SPI errors plus 97% of reports inside 10ms means the whole
   electrical and firmware path is fine.
+- Measure the pointer with `tools/cursorgaps.swift`, never by frame-differencing
+  a screen recording. QuickTime drops frames under load — two captures of the
+  same fault came out at 52fps and 37.6fps against a nominal 60 — and a dropped
+  frame is indistinguishable from a frozen cursor. That artefact is what made a
+  BLE latency change look like it helped. Healthy reference: ~102 updates/sec,
+  median gap 8.1ms, 96% inside 16ms.
 - The mod key is the `nav_mod` macro, not a plain `&mo`: on release it taps
   `&tog_off SELECT` so sticky selection always dies with the mod key. Don't
   "simplify" it to `&mo NAV`.
