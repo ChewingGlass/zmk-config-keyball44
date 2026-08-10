@@ -72,8 +72,9 @@ that isn't obvious from the code.
   a screen recording. QuickTime drops frames under load — two captures of the
   same fault came out at 52fps and 37.6fps against a nominal 60 — and a dropped
   frame is indistinguishable from a frozen cursor. That artefact is what made a
-  BLE latency change look like it helped. Healthy reference: ~102 updates/sec,
-  median gap 8.1ms, 96% inside 16ms.
+  BLE latency change look like it helped. Healthy reference, measured with a
+  freely spinning ball at the stock slave latency of 16: ~115 updates/sec,
+  median gap 8.2ms, p90 8.9ms, p99 15.5ms, 99% inside 16ms.
 - The mod key is the `nav_mod` macro, not a plain `&mo`: on release it taps
   `&tog_off SELECT` so sticky selection always dies with the mod key. Don't
   "simplify" it to `&mo NAV`.
