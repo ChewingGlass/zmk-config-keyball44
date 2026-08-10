@@ -20,7 +20,7 @@ TAB    A  S  D  F  G   │   H  J  K  L  ;   '
 LSHFT  Z  X  C  V  B   │   N  M  ,  .  /   L-CLICK
                        │
 SCROLL TAB ENTER MOD SYM │ BSPC SPACE   ◉ball  R-CLICK
- ⇧alt  ⇧cmd ⇧num  ⇧nav ⇧ │              (corner key)
+ ⇧alt  ⇧cmd ⇧num  ⇧nav ⇧ │              (⇧ctrl)
 ```
 
 There is no right Shift and no Delete — those two keys became the mouse buttons —
@@ -37,8 +37,10 @@ Left thumb row, left to right:
 | **MOD** | — | **NAV** layer (your old `LM(1, GUI)` key) |
 | inner | — | **SYM** layer |
 
-Right side: `BSPC` + `SPACE` thumbs, **right click** on the corner key past the
-trackball, `ENTER` is on the left thumb now (tap the NUM key).
+Right side: `BSPC` + `SPACE` thumbs, `ENTER` is on the left thumb now (tap the NUM
+key). The corner key past the trackball is **tap = right click, hold = Ctrl** —
+the corne carried Ctrl on a seventh column this board doesn't have and as the
+hold of its Enter thumb, so this is its only home.
 
 ## The MOD key (NAV layer)
 
@@ -76,7 +78,7 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | --- | --- |
 | Point | just move the ball |
 | Left click | bottom-right key of the letter block (where right Shift would be) |
-| Right click | corner key past the trackball |
+| Right click | **tap** the corner key past the trackball (**hold** it for Ctrl) |
 | Scroll mode (locked) | tap the bottom-left key; tap again to exit |
 | Scroll (momentary) | hold MOD |
 | Pointer speed | `CONFIG_PMW3610_CPI` (1600) **plus** macOS → Mouse → Tracking speed; the slider is the fine adjustment |

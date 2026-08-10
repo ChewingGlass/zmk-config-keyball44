@@ -60,6 +60,20 @@
             bindings = <&kp>, <&tog>;
         };
 
+        // Corner key past the trackball: tap right-click, hold Ctrl. Ctrl had no
+        // home at all after the port — the corne carried it twice, on a seventh
+        // column this board does not have and as the hold of its Enter thumb,
+        // and Enter moved to the left thumb here. A tap action and a modifier
+        // hold do not compete for the same key, so nothing is given up.
+        rclk_ctrl: rclk_ctrl {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <150>;
+            bindings = <&kp>, <&mkp>;
+        };
+
         // NAV cluster shift variants (mod-morph suppresses the held shift,
         // matching the old Vial key-override behavior)
         nav_up: nav_up {
@@ -169,7 +183,7 @@
 &kp ESC         &kp Q  &kp W         &kp E          &kp R     &kp T              &kp Y      &kp U  &kp I      &kp O    &kp P      &kp BSPC
 &kp TAB         &kp A  &kp S         &kp D          &kp F     &kp G              &kp H      &kp J  &kp K      &kp L    &kp SEMI   &kp SQT
 &kp LSHFT       &kp Z  &kp X         &kp C          &kp V     &kp B              &kp N      &kp M  &kp COMMA  &kp DOT  &kp SLASH  &mkp LCLK
-&scroll_alt LALT SCROLL  &mt LGUI TAB  &lt NUM ENTER  &nav_mod  &mo SYM  &kp BSPC  &kp SPACE                                        &mkp RCLK
+&scroll_alt LALT SCROLL  &mt LGUI TAB  &lt NUM ENTER  &nav_mod  &mo SYM  &kp BSPC  &kp SPACE                                &rclk_ctrl LCTRL RCLK
             >;
         };
 

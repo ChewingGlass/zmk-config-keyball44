@@ -80,6 +80,16 @@ that isn't obvious from the code.
   "simplify" it to `&mo NAV`.
 - SELECT must stay a higher layer index than NAV (it overlays it), and mostly
   `&trans` so unlisted keys fall through to NAV's Cmd bindings.
+- Ctrl lives only on the corner key's hold (`rclk_ctrl`, tap = right click). The
+  corne had it twice — a seventh column this board lacks, and the hold of its
+  `LCTL_T(ENTER)` right thumb — and Enter moved to the left thumb here, so both
+  were lost in the port. Ctrl+C and Ctrl+R also sit on NUM, from before the key
+  existed; they are redundant now but harmless.
+- Deliberate deviations from the Vial dump, so they are not "fixed" by mistake:
+  `mod`+space is sticky selection where the corne had Opt+Space; Caps Lock gave
+  its key to Tab; Delete gave its key to right click. Everything else in NAV,
+  SYM and NUM matches the dump binding for binding — verified by decoding
+  `~/source/vial_config_final_4.vil` and diffing against the compiled keymap.
 - All shortcuts are macOS-flavored (Cmd/Opt). The corne/dactyl configs were Mac.
 - ZMK is pinned to v0.3 in `config/west.yml`; `toggle-mode = "on"/"off"` on
   `zmk,behavior-toggle-layer` requires ≥ v0.3.
