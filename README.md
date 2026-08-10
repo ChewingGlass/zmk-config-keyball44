@@ -16,14 +16,16 @@ All shortcuts are macOS-flavored (Cmd-based).
 
 ```
 ESC    Q  W  E  R  T   │   Y  U  I  O  P   BSPC
-CAPS   A  S  D  F  G   │   H  J  K  L  ;   '
+TAB    A  S  D  F  G   │   H  J  K  L  ;   '
 LSHFT  Z  X  C  V  B   │   N  M  ,  .  /   L-CLICK
                        │
 SCROLL TAB ENTER MOD SYM │ BSPC SPACE   ◉ball  R-CLICK
  ⇧alt  ⇧cmd ⇧num  ⇧nav ⇧ │              (corner key)
 ```
 
-There is no right Shift and no Delete — those two keys became the mouse buttons.
+There is no right Shift and no Delete — those two keys became the mouse buttons —
+and no Caps Lock, whose key is now `TAB`. `TAB` is also still the tap of the
+second left thumb key, so it is reachable either way.
 
 Left thumb row, left to right:
 
