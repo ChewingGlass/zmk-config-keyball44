@@ -57,6 +57,14 @@ that isn't obvious from the code.
   `CONFIG_PMW3610_ACCELERATION_*` adds reach on fast flicks. Acceleration is
   quadratic (`x + x*x/(22 - 2*sensitivity)`) so it gets jumpy fast — sensitivity
   landed at 1, and 5 was already too much. Sensitivity >10 divides by zero.
+- Check thumb placement FIRST. The sensor is side-mounted, so it images the ball
+  from one side: a thumb resting on top of the ball presses it away from that
+  lens, past the focal range, and tracking stops until the pressure eases.
+  Driving the ball from the side keeps it seated. This was the real cause of a
+  long run of "it misses movement" reports, after CPI, scaler ratios, polling
+  rate, rest timings, BLE latency and macOS acceleration had all been changed
+  in pursuit of it. It presents as random dropouts at any speed, because it
+  tracks pressure rather than speed.
 - Trackball "misses movement" is mechanical until proven otherwise. A long tuning
   session chased this through CPI, scaler ratios, polling rate, rest timings, BLE
   latency and macOS acceleration; the cause was the ball sticking in its bearings

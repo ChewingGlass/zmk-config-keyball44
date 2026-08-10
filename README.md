@@ -86,7 +86,14 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | Acceleration | on, `CONFIG_PMW3610_ACCELERATION_SENSITIVITY` (5, max **10**) — the reach for long movements |
 | Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (120; higher = slower) — ball travel per click is `TICK * 25.4 / CPI` mm, currently 1.9mm |
 
-**Before tuning anything, check the ball spins freely.** Weeks of pointer settings
+**Before tuning anything, check how you are holding it.** The sensor is
+side-mounted and images the ball from one side, so a thumb resting on *top* of
+the ball presses it away from the lens and out of focus — tracking simply stops
+until the pressure eases, at any speed, seemingly at random. Drive the ball from
+the side. This accounted for essentially every "it misses movement" symptom
+here, after a great many settings had been changed chasing it.
+
+**Then check the ball spins freely.** Weeks of pointer settings
 were once spent on what turned out to be a ball sticking in its bearings — the
 sensor was correctly reporting no rotation, and no setting can fix that. Flick the
 reseated ball: it should coast for a second or more and feel glassy. Clean with
