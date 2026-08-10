@@ -84,22 +84,25 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | Acceleration | on, `CONFIG_PMW3610_ACCELERATION_SENSITIVITY` (5, max **10**) — the reach for long movements |
 | Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (120; higher = slower) — ball travel per click is `TICK * 25.4 / CPI` mm, currently 1.9mm |
 
-**Tune in this order.** There is no single gain that serves both short and long
-movements, which is what makes this feel unfixable if approached backwards:
+**Before tuning anything, check the ball spins freely.** Weeks of pointer settings
+were once spent on what turned out to be a ball sticking in its bearings — the
+sensor was correctly reporting no rotation, and no setting can fix that. Flick the
+reseated ball: it should coast for a second or more and feel glassy. Clean with
+isopropyl alcohol only; household or disinfecting wipes leave a film that causes
+exactly this.
 
-1. **macOS acceleration off** — System Settings → Mouse → Advanced. Two curves
-   stacked on each other cannot be reasoned about, and the firmware one is the one
-   you can inspect and change.
-2. **Base gain** — `CONFIG_PMW3610_CPI` plus the macOS tracking slider. Set this by
-   how precise **short** movements feel, and ignore long ones for now.
-3. **Acceleration** — raise `CONFIG_PMW3610_ACCELERATION_SENSITIVITY` until **long**
-   movements reach comfortably. Reports of one count or less skip the curve, so this
-   cannot spoil step 2.
+The defaults here are deliberately conventional: firmware acceleration off, macOS
+acceleration left on, so the pointer behaves like any other mouse on the machine.
+If that is not enough, tune in this order:
 
-Setting base gain by long movements is the trap: short movements then inherit that
-same high gain and land coarsely, and no amount of further tuning recovers them.
+1. **Base speed** — `CONFIG_PMW3610_CPI` plus the macOS tracking slider, set by how
+   precise **short** movements feel.
+2. If long movements then can't reach, **disable macOS acceleration** (System
+   Settings → Mouse → Advanced) and enable the firmware curve instead. Do not run
+   both: stacked curves cannot be reasoned about, and that is what made
+   `ACCELERATION_SENSITIVITY=5` feel wild.
 
-Other notes, because several of these are traps:
+Notes, because several of these are traps:
 
 - **Leave `CONFIG_PMW3610_CPI_DIVIDOR` at 1.** It is not a sensor setting — it is an
   integer divide applied to every motion report. Any value above 1 truncates small

@@ -57,6 +57,17 @@ that isn't obvious from the code.
   `CONFIG_PMW3610_ACCELERATION_*` adds reach on fast flicks. Acceleration is
   quadratic (`x + x*x/(22 - 2*sensitivity)`) so it gets jumpy fast — sensitivity
   landed at 1, and 5 was already too much. Sensitivity >10 divides by zero.
+- Trackball "misses movement" is mechanical until proven otherwise. A long tuning
+  session chased this through CPI, scaler ratios, polling rate, rest timings, BLE
+  latency and macOS acceleration; the cause was the ball sticking in its bearings
+  (made worse by cleaning it with a disinfecting wipe, which leaves a film). The
+  USB logging build settles it in minutes — `./build.sh debug`, `./flash.sh debug`,
+  `./capture-log.sh 15 > trackball.log`. The signature of a mechanical fault is
+  that every gap in motion reports is *bracketed by deceleration and
+  acceleration*: the ball slows to a near-stop, reports nothing, then speeds up.
+  A genuine sensor or link dropout interrupts motion abruptly, with large reports
+  either side. Zero SPI errors plus 97% of reports inside 10ms means the whole
+  electrical and firmware path is fine.
 - The mod key is the `nav_mod` macro, not a plain `&mo`: on release it taps
   `&tog_off SELECT` so sticky selection always dies with the mod key. Don't
   "simplify" it to `&mo NAV`.
