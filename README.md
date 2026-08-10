@@ -119,9 +119,21 @@ Tuning notes, because two of these are traps:
 - Still laggy at 125? `CONFIG_BT_PERIPHERAL_PREF_LATENCY` is 16, meaning the radio
   may skip up to 16 connection events to save power. Lowering it trades battery for
   responsiveness.
-- Ball dead for a moment after sitting idle? The sensor downshifts to a low-power
-  sample rate. `CONFIG_PMW3610_RUN_DOWNSHIFT_TIME_MS` is already at its 3264ms
-  maximum; `CONFIG_PMW3610_FORCE_AWAKE=y` pins it awake at real battery cost.
+- **Small movements missed, but only sometimes?** The sensor steps down through
+  RUN → REST1 → REST2 → REST3 as the ball sits idle, sampling less often at each
+  step, and a movement slow enough to finish between two samples is never seen.
+  How long the ball rested decides which state it is in, hence the intermittency.
+  The trap is that the driver guards the REST2/REST3 knobs with `#if <value> >= 10`,
+  so leaving them blank means the hardware defaults apply — about 100ms and 500ms
+  between samples. All the rest timings are set explicitly in
+  `keyball44_right.conf`; note that an out-of-range value is rejected at init and
+  the register silently keeps its default, so respect the bounds documented there.
+  If movement is still missed after an idle spell, `CONFIG_PMW3610_FORCE_AWAKE=y`
+  pins the sensor in RUN mode at a real cost to battery.
+- Every nudge losing its first count is a different problem — that is the
+  `zip_xy_scaler`, which banks a fraction below 1 as a remainder and only emits
+  once it accumulates. It never discards anything, but a single tiny nudge can
+  move nothing until the next one. Raising the scaler toward `1 1` removes it.
 
 The auto-mouse layer is off (`automouse-layer = <0>` in `keyball44_right.overlay`),
 which compiles the mechanism out of the driver — moving the ball never changes a
