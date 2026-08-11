@@ -101,6 +101,12 @@ that isn't obvious from the code.
 - The mod key is the `nav_mod` macro, not a plain `&mo`: on release it taps
   `&tog_off SELECT` so sticky selection always dies with the mod key. Don't
   "simplify" it to `&mo NAV`.
+- NAV's TAB key is the `app_switch` macro, and the point of it is that it holds Cmd
+  for the duration of the key press rather than for the duration of one Tab. Don't
+  "simplify" it to `&kp LG(TAB)`: that closes the switcher inside the keypress, which
+  is the whole reason the macro exists. It also has to keep its press and release
+  balanced — ZMK counts explicit modifier registrations, so pressing Cmd more often
+  than releasing it leaves Cmd stuck down.
 - SELECT must stay a higher layer index than NAV (it overlays it), and mostly
   `&trans` so unlisted keys fall through to NAV's Cmd bindings.
 - Left thumb cluster, outer to inner: scroll/Alt, TAB/NUM, ENTER/Shift, MOD, SYM.
@@ -125,7 +131,10 @@ that isn't obvious from the code.
   existed; they are redundant now but harmless.
 - Deliberate deviations from the Vial dump, so they are not "fixed" by mistake:
   `mod`+space is sticky selection where the corne had Opt+Space; Caps Lock gave
-  its key to Tab; Delete gave its key to right click. Everything else in NAV,
+  its key to Tab; Delete gave its key to right click; the top-right Backspace,
+  a duplicate of the right thumb's, gave its key to the scroll toggle so scroll
+  mode is reachable with the right hand alone (`mod` still makes it Cmd+Backspace,
+  as does `mod`+the thumb Backspace). Everything else in NAV,
   SYM and NUM matches the dump binding for binding — verified by decoding
   `~/source/vial_config_final_4.vil` and diffing against the compiled keymap.
 - All shortcuts are macOS-flavored (Cmd/Opt). The corne/dactyl configs were Mac.
@@ -224,12 +233,15 @@ these after any keymap or trackball change:
    click = corner key past the ball. Both are plain `&mkp` on the base layer,
    not an auto-mouse layer. Pointer speed via `CONFIG_PMW3610_CPI` plus the
    `zip_xy_scaler` on the listener; scroll direction via the INVERT_SCROLL opts.
-3. Bottom-left thumb: tap toggles scroll lock, hold is Option/Alt (`scroll_alt`
+3. Scroll: the top-right key is `&tog SCROLL`, reachable with the right hand
+   alone; it works to toggle back off because SCROLL is all `&trans` and falls
+   through to it. Bottom-left thumb: tap toggles scroll lock, hold is Option/Alt (`scroll_alt`
    hold-tap). Next thumb key: tap TAB, hold NUM, and tap-with-shift-held for
    shift+enter (hold NUM + tap Enter does the same). Ball scrolls while mod held.
 4. Mod key: mod+C copies, mod+J/K/L/I arrows, mod+U/O word-jump, mod+H
    end-of-line (shift+ for start), shift+mod+I/K page up/down, mod+D acts as
-   shift.
+   shift. mod+TAB held keeps the app switcher open and mod+J/L move the
+   selection in it; a quick tap of mod+TAB is a plain Cmd+Tab.
 5. Sticky selection: mod+space, then mod+jkliuo extends selection; mod+C/X/V
    exits (copy/cut also tap ESC — dactyl parity; drop ESC from the sel_copy/
    sel_cut macros if it misbehaves in some app); releasing mod exits.

@@ -15,7 +15,7 @@ All shortcuts are macOS-flavored (Cmd-based).
 ## Base layer
 
 ```
-ESC   Q  W  E  R  T   │   Y  U  I  O  P   BSPC
+ESC   Q  W  E  R  T   │   Y  U  I  O  P   SCRL
 TAB   A  S  D  F  G   │   H  J  K  L  ;   '
 CMD   Z  X  C  V  B   │   N  M  ,  .  /   L-CLICK
                       │
@@ -33,6 +33,11 @@ keys do.
 There is no right Shift and no Delete — those two keys became the mouse buttons —
 and no Caps Lock, whose key is now `TAB`. `TAB` is also still the tap of the
 second left thumb key, so it is reachable either way.
+
+The top-right key is **scroll mode**, not a second Backspace. Backspace is the right
+thumb, which is the one that actually gets used; the corner key duplicated it and now
+earns its keep as the one scroll toggle the right hand can reach alone. `mod` still
+makes it ⌘⌫ (delete line).
 
 Left thumb row, left to right:
 
@@ -73,10 +78,18 @@ Hold MOD and every key becomes `Cmd+<key>` (`mod+C` = copy, `mod+W` = close tab,
 | `H` | end of line (⌘→) | start of line (⌘←) |
 | `E` | delete word back (⌥⌫) | — |
 | `M` / `,` | back / forward (⌘[ / ⌘]) | — |
+| `TAB` | app switcher: tap = last app, **hold** = switcher stays open, pick with `J`/`L`, release to commit | — |
 | `D` | acts as Shift inside NAV | — |
-| top-right `BSPC` | delete line (⌘⌫) | — |
+| top-right key | delete line (⌘⌫) | — |
 
 The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
+
+`mod`+`TAB` is a real app switcher rather than a one-shot ⌘⇥, because the switcher
+only stays up while ⌘ is physically held and a `&kp LG(TAB)` releases it inside the
+keypress. That key holds ⌘ for as long as you hold it, so the switcher behaves the
+way it does on any Mac keyboard: hold, choose, release. `mod`+the NUM thumb key is
+still the plain one-shot ⌘⇥ for bouncing between two apps, and it also advances the
+switcher while `mod`+`TAB` is being held.
 
 ## Sticky selection
 
@@ -97,12 +110,18 @@ The trackball **scrolls** while MOD is held (like holding MOVE on the dactyl).
 | Point | just move the ball |
 | Left click | bottom-right key of the letter block (where right Shift would be) |
 | Right click | **tap** the corner key past the trackball (**hold** it for Ctrl) |
-| Scroll mode (locked) | tap the bottom-left key; tap again to exit |
+| Scroll mode (locked) | tap the **top-right** key (right hand alone) or the bottom-left thumb key; tap either again to exit |
 | Scroll (momentary) | hold MOD |
 | Pointer speed | `CONFIG_PMW3610_CPI` (1600) **plus** macOS → Mouse → Tracking speed; the slider is the fine adjustment |
 | Fine speed trim | `&zip_xy_scaler 1 1` in `keyball44_right.overlay` — leave at 1/1; ratios below 1 make small movements jolty |
 | Acceleration | sigmoid, `ACCELERATION_ALGORITHM=2` + `ACCELERATION_SENSITIVITY` (3) — sensitivity is the **maximum** multiplier, reached on hard flicks |
 | Scroll speed | `CONFIG_PMW3610_SCROLL_TICK` (120; higher = slower) — ball travel per click is `TICK * 25.4 / CPI` mm, currently 1.9mm |
+
+The top-right key exists for one-handed use: the bottom-left thumb key and the
+momentary scroll under MOD both need the left hand, which is no help when the right
+hand is on the ball by itself. It is a toggle rather than a momentary layer for the
+same reason — the hand has to be free to move the ball once scrolling is on. Both
+toggles drive the same layer, so either one turns the other off.
 
 **Before tuning anything, check how you are holding it.** The sensor is
 side-mounted and images the ball from one side, so a thumb resting on *top* of
