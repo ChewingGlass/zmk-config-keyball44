@@ -134,7 +134,8 @@ that isn't obvious from the code.
   its key to Tab; Delete gave its key to right click; the top-right Backspace,
   a duplicate of the right thumb's, gave its key to the scroll toggle so scroll
   mode is reachable with the right hand alone (`mod` still makes it Cmd+Backspace,
-  as does `mod`+the thumb Backspace). Everything else in NAV,
+  as does `mod`+the thumb Backspace); `mod`+`'` is Cmd+Enter (VSCode's auto-import)
+  where the dump's blanket Cmd made it Cmd+'. Everything else in NAV,
   SYM and NUM matches the dump binding for binding — verified by decoding
   `~/source/vial_config_final_4.vil` and diffing against the compiled keymap.
 - All shortcuts are macOS-flavored (Cmd/Opt). The corne/dactyl configs were Mac.

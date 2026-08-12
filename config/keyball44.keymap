@@ -264,7 +264,7 @@
             label = "NAV";
             bindings = <
 &kp LG(ESC)  &kp LG(Q)  &kp LG(W)  &kp LA(BSPC)  &kp LG(R)  &kp LG(T)                 &kp LG(Y)  &nav_word_left  &nav_up  &nav_word_right  &kp LG(P)    &kp LG(BSPC)
-&app_switch  &kp LG(A)  &kp LG(S)  &kp LSHFT     &kp LG(F)  &kp LG(G)                 &nav_line  &nav_left     &nav_down  &nav_right     &kp LG(SEMI)   &kp LG(SQT)
+&app_switch  &kp LG(A)  &kp LG(S)  &kp LSHFT     &kp LG(F)  &kp LG(G)                 &nav_line  &nav_left     &nav_down  &nav_right     &kp LG(SEMI)   &kp LG(ENTER)
 &trans       &kp LG(Z)  &kp LG(X)  &kp LG(C)     &kp LG(V)  &kp LG(B)                 &kp LG(N)  &kp LG(LBKT)  &kp LG(RBKT)  &kp LG(DOT)  &kp LG(SLASH)  &trans
 &trans       &kp LG(TAB)  &trans   &trans        &trans                &kp LG(BSPC)   &tog_on SELECT                                                    &trans
             >;

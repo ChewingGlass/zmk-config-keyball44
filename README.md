@@ -79,6 +79,7 @@ Hold MOD and every key becomes `Cmd+<key>` (`mod+C` = copy, `mod+W` = close tab,
 | `E` | delete word back (⌥⌫) | — |
 | `M` / `,` | back / forward (⌘[ / ⌘]) | — |
 | `TAB` | app switcher: tap = last app, **hold** = switcher stays open, pick with `J`/`L`, release to commit | — |
+| `'` | ⌘↩ — VSCode's auto-import / quick-fix accept, rather than the ⌘' this key would otherwise send | — |
 | `D` | acts as Shift inside NAV | — |
 | top-right key | delete line (⌘⌫) | — |
 
