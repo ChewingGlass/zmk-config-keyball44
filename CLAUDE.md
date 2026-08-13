@@ -118,12 +118,14 @@ that isn't obvious from the code.
   now used by nothing but the Shift key, so its flavor is tuned for Shift
   (`balanced` — see the comment on it) rather than for a tap-first key; and SYS
   (SYM+NUM) spans the cluster's two ends instead of two neighbours.
-- Enter being the Shift key's tap means shift+enter needs a second key. It is on
-  both of the neighbouring press orders: the NUM key is `&num_tab`, whose tap
-  morphs TAB -> shift+enter while shift is held, and NUM's own layer puts
-  `&kp LS(ENTER)` on the Enter/Shift thumb. Note `num_tab`'s tap side is a
-  zero-parameter mod-morph, so the keymap passes a dummy `0` as its second
-  parameter (`&num_tab NUM 0`) — hold-tap always takes two.
+- Enter being the Shift key's tap means shift+enter needs a second key. Three keys
+  carry it. `space_shift_enter` on the right thumb is the one in daily use, since
+  Shift and Space are opposite thumbs. The other two exist to cover both press
+  orders on the Enter-side thumb keys: `&num_tab`, whose tap morphs TAB ->
+  shift+enter while shift is held, and `&kp LS(ENTER)` on NUM's own layer at the
+  Enter/Shift thumb. Note `num_tab`'s tap side is a zero-parameter mod-morph, so
+  the keymap passes a dummy `0` as its second parameter (`&num_tab NUM 0`) —
+  hold-tap always takes two.
 - Ctrl lives only on the corner key's hold (`rclk_ctrl`, tap = right click). The
   corne had it twice — a seventh column this board lacks, and the hold of its
   `LCTL_T(ENTER)` right thumb — and Enter moved to the left thumb here, so both
@@ -217,7 +219,9 @@ drive disappearing as the success signal.
 `origin` is `ChewingGlass/zmk-config-keyball44`, Noah's fork, and is writable.
 The upstream it was forked from is the `mochukeeb` remote, which is read-only —
 never push there. Work happens on the `keyball44-noah` branch and is published to
-`master` on the fork, so a push is `git push origin keyball44-noah:master`.
+`master` on the fork, so a push is `git push origin keyball44-noah:master`. Leave
+`keyball44-noah` with no upstream. If it tracks `origin/master`, an editor's push
+button writes to master without the refspec, and the branch names no longer match.
 Upstream has no main branch; `niceview` (our base) and `oled` are
 display-specific — don't mix firmware.
 

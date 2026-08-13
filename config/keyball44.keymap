@@ -94,6 +94,21 @@
             bindings = <&mo>, <&tab_shift_enter>;
         };
 
+        // Space sends shift plus enter while shift is held. Space sits under the
+        // opposite thumb from Shift, so this is the cheapest of the three ways to
+        // reach shift plus enter. The morph masks the held shift, and the morphed
+        // binding supplies its own, so the host receives one shift.
+        //
+        // The board gives up shift plus space, which some applications use to
+        // scroll up one page. A held shift that outlasts a capital letter now
+        // turns the next space into a newline.
+        space_shift_enter: space_shift_enter {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp SPACE>, <&kp LS(ENTER)>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+
         tab_shift_enter: tab_shift_enter {
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
@@ -256,7 +271,7 @@
 &kp ESC         &kp Q  &kp W         &kp E          &kp R     &kp T              &kp Y      &kp U  &kp I      &kp O    &kp P      &tog SCROLL
 &kp TAB         &kp A  &kp S         &kp D          &kp F     &kp G              &kp H      &kp J  &kp K      &kp L    &kp SEMI   &kp SQT
 &kp LGUI        &kp Z  &kp X         &kp C          &kp V     &kp B              &kp N      &kp M  &kp COMMA  &kp DOT  &kp SLASH  &mkp LCLK
-&scroll_alt LALT SCROLL  &num_tab NUM 0  &mt LSHFT ENTER  &nav_mod  &mo SYM  &kp BSPC  &kp SPACE                           &rclk_ctrl LCTRL RCLK
+&scroll_alt LALT SCROLL  &num_tab NUM 0  &mt LSHFT ENTER  &nav_mod  &mo SYM  &kp BSPC  &space_shift_enter                   &rclk_ctrl LCTRL RCLK
             >;
         };
 

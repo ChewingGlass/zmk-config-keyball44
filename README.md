@@ -54,11 +54,15 @@ resolves the moment the letter is released rather than after the 240ms tapping
 term — `tap-preferred`, which the other hold-taps use, would make every shifted
 character wait out the timer.
 
-**shift+enter** can't come from that key alone, since Enter is its tap. It is the
-two Enter-side thumb keys together, in either order: hold Shift and tap the NUM key
-(whose tap morphs from `TAB` to shift+enter while Shift is down), or hold NUM and
-tap the Enter key. The cost is shift+`TAB` from that thumb, which is still on the
-`TAB` key in the letter block.
+**shift+enter** can't come from that key alone, since Enter is its tap, so it lives
+on other keys instead. The ergonomic one is **Shift + `SPACE`** — opposite thumbs,
+nothing to reach for. Two fallbacks on the Enter-side thumb keys cover either press
+order: hold Shift and tap the NUM key, or hold NUM and tap the Enter key.
+
+Each route costs the shifted version of the key it morphs: shift+`SPACE` (page-up in
+some browsers) and shift+`TAB` from that thumb (still on the `TAB` key in the letter
+block). And since Shift is a thumb hold now, a shift that outlasts its capital turns
+the next space into a newline — the one thing to watch for.
 
 Right side: `BSPC` + `SPACE` thumbs, `ENTER` is on the left thumb now (tap the NUM
 key). The corner key past the trackball is **tap = right click, hold = Ctrl** —
