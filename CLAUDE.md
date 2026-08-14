@@ -116,7 +116,8 @@ that isn't obvious from the code.
   (*alt*, *command*) date from the previous arrangement and no longer match.
   Consequences worth knowing before rearranging again: the global `&mt` block is
   now used by nothing but the Shift key, so its flavor is tuned for Shift
-  (`balanced` — see the comment on it) rather than for a tap-first key; and SYS
+  (`hold-preferred` with `hold-while-undecided` — see the comment on it) rather than
+  for a tap-first key; and SYS
   (SYM+NUM) spans the cluster's two ends instead of two neighbours.
 - Enter being the Shift key's tap means shift+enter needs a second key. Three keys
   carry it. `space_shift_enter` on the right thumb is the one in daily use, since
@@ -231,9 +232,11 @@ Worked through on hardware 2026-08-10; kept as the regression list. Re-verify
 these after any keymap or trackball change:
 
 1. Halves pair; typing works on the base layer; Enter = tap of the Shift thumb
-   key, capitals = hold it (if Enter misfires while rolling keys, or capitals
-   need waiting out, tune the global `&mt` block: tapping-term 240ms /
-   balanced / quick-tap 150).
+   key, capitals = hold it. Shift must win even when the thumb releases before
+   the other key: that is what `hold-preferred` plus `hold-while-undecided` on the
+   global `&mt` block buys, and `balanced` failed it by sending Enter and an
+   unshifted letter. Do not go back to `balanced` to protect Enter rolls; Shift
+   is the hot function on that key now.
 2. Trackball points; left click = bottom-right key of the letter block, right
    click = corner key past the ball. Both are plain `&mkp` on the base layer,
    not an auto-mouse layer. Pointer speed via `CONFIG_PMW3610_CPI` plus the

@@ -25,15 +25,27 @@
     quick-tap-ms = <150>;
 };
 
-// Shift lives on the hold of a thumb key (tap = Enter), so "tap-preferred" is
-// wrong here: it resolves the hold only when the tapping term expires, which
-// means a capital letter has to wait 240ms before it will shift. "balanced"
-// resolves the hold as soon as the other key is released, so Shift+letter is
-// immediate, while Enter-then-keep-typing rolls still come out as Enter.
+// Shift is the hold of this key. Enter is the tap.
+//
+// The flavor is hold-preferred. Balanced resolves to a tap when Shift releases
+// before the other key. That release order is common, and it sends Enter and an
+// unshifted letter instead of a capital. Hold-preferred resolves to the hold as
+// soon as another key goes down, so Shift always wins.
+//
+// hold-while-undecided presses Shift at key down. Shift is then in the HID report
+// before the other key arrives. This matters on a split keyboard. The central
+// timestamps a peripheral key event when the event arrives over Bluetooth, so a
+// left half key can sort after a right half key that came later. A tap releases
+// Shift before it sends Enter, so a tap still sends a clean Enter.
+//
+// The cost is a roll out of Enter into the next character. The board then sends
+// shift plus that character and no Enter. A tap of Enter keeps its speed, because
+// the release decides the tap at once. The tapping term only bounds a lone hold.
 &mt {
     tapping-term-ms = <240>;
-    flavor = "balanced";
+    flavor = "hold-preferred";
     quick-tap-ms = <150>;
+    hold-while-undecided;
 };
 
 &caps_word { continue-list = <UNDERSCORE MINUS>; };

@@ -49,10 +49,18 @@ Left thumb row, left to right:
 | **MOD** | — | **NAV** layer (your old `LM(1, GUI)` key) |
 | inner | — | **SYM** layer |
 
-The Shift key is `&mt LSHFT ENTER` on the `balanced` flavor, so a capital letter
-resolves the moment the letter is released rather than after the 240ms tapping
-term — `tap-preferred`, which the other hold-taps use, would make every shifted
-character wait out the timer.
+The Shift key is `&mt LSHFT ENTER` on the `hold-preferred` flavor with
+`hold-while-undecided`, which means Shift wins the moment any other key goes down,
+and Shift is already in the HID report before that key is processed. `balanced` was
+tried first and produced the classic failure: it only counts as a hold if the other
+key is *released* first, so releasing Shift out of a roll sent Enter plus an
+unshifted letter. On a split keyboard that is made worse by the central timestamping
+a peripheral key when it arrives over BLE rather than when it was pressed.
+
+Tapping Enter is not slowed by this — the release decides the tap immediately, and
+the 240ms term only bounds how long a *lone* hold takes to become Shift. What it
+does cost is rolling out of Enter into the next character while Enter is still held:
+that now gives shift+character and no Enter.
 
 **shift+enter** can't come from that key alone, since Enter is its tap, so it lives
 on other keys instead. The ergonomic one is **Shift + `SPACE`** — opposite thumbs,
