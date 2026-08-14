@@ -136,7 +136,15 @@ hand is on the ball by itself. It is a toggle rather than a momentary layer for 
 same reason — the hand has to be free to move the ball once scrolling is on. Both
 toggles drive the same layer, so either one turns the other off.
 
-**Before tuning anything, check how you are holding it.** The sensor is
+**Before tuning anything, check the ball sits at the right height.** The sensor
+focuses a few millimetres from the ball, and the 3D printed holder does not
+reliably put it there — a paper shim under the holder, raising the ball a few
+millimetres, cured a long run of dropouts that no firmware setting touched. The
+tell is that it fails at *every* speed, ignores every setting, and the sensor
+reports no movement even though its image looks fine. Fix the geometry first;
+everything below is downstream of it.
+
+**Then check how you are holding it.** The sensor is
 side-mounted and images the ball from one side, so a thumb resting on *top* of
 the ball presses it away from the lens and out of focus — tracking simply stops
 until the pressure eases, at any speed, seemingly at random. Drive the ball from

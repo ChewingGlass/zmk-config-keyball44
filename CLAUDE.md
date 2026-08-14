@@ -62,7 +62,21 @@ that isn't obvious from the code.
   number a maximum multiplier and safe to raise. 2 is also the only one worth
   stacking on top of the macOS curve, which is the arrangement here — a low macOS
   tracking slider for precision, firmware acceleration for reach.
-- Check thumb placement FIRST. The sensor is side-mounted, so it images the ball
+- Check the ball-to-sensor distance FIRST, before any setting. The sensor has a
+  working distance of a few millimetres and the 3D printed ball holder does not
+  hold it there reliably. A paper shim under the holder, lifting the ball a few
+  millimetres, fixed a long run of "misses movement" that survived every firmware
+  change tried against it.
+  The signature, measured with the tools on the `trackball-experiments` branch:
+  the sensor reports no displacement on about half of its 8ms samples while SQUAL
+  and shutter look healthy and are identical on the samples that do carry motion.
+  No gap ever ends in a catch-up burst, because nothing accumulates. It does not
+  respond to CPI, polling rate, BLE, macOS, or cleaning, and it fails at every
+  speed. SQUAL alone does not prove the geometry is right: a ball outside the
+  working distance still returns contrast, and the sensor still fails to correlate
+  one frame against the next. Do not trust a SQUAL reading unless it is compared
+  against the same ball at a known-good height.
+- Check thumb placement SECOND — it is the same fault, applied by hand. The sensor is side-mounted, so it images the ball
   from one side: a thumb resting on top of the ball presses it away from that
   lens, past the focal range, and tracking stops until the pressure eases.
   Driving the ball from the side keeps it seated. This was the real cause of a
